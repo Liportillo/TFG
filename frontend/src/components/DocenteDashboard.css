@@ -1,0 +1,177 @@
+/* Archivo: frontend/src/components/DocenteDashboard.css */
+
+.docente-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+}
+
+.docente-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  padding: 15px 30px;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  margin-bottom: 25px;
+}
+
+.nav-logo {
+  background: #3b82f6;
+  color: white;
+  font-weight: bold;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 1.2rem;
+}
+
+.nav-links {
+  display: flex;
+  list-style: none;
+  gap: 30px;
+  margin: 0;
+  padding: 0;
+  color: #666;
+  font-weight: 500;
+}
+
+.nav-links li { cursor: pointer; }
+.nav-links li.active {
+  color: #3b82f6;
+  font-weight: bold;
+  border-bottom: 2px solid #3b82f6;
+  padding-bottom: 5px;
+}
+
+.nav-user {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  font-weight: bold;
+}
+
+.user-avatar {
+  background: #10b981;
+  color: white;
+  width: 35px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 0.9rem;
+}
+
+.logout-btn-small {
+  background: transparent;
+  border: 1px solid #dc2626;
+  color: #dc2626;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.logout-btn-small:hover { background: #fee2e2; }
+
+.filter-section, .table-section {
+  background: white;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  margin-bottom: 25px;
+  text-align: left;
+}
+
+.filter-section h2, .table-section h2 {
+  font-size: 1.2rem;
+  margin-top: 0;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.export-btn {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  width: 100%;
+}
+
+.export-btn:hover { background: #059669; }
+
+.evaluations-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.evaluations-table th, .evaluations-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.evaluations-table th {
+  color: #666;
+  font-weight: 600;
+  background-color: #f9fafb;
+}
+
+.status-badge {
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: bold;
+}
+
+.status-badge.completed { background: #d1fae5; color: #065f46; }
+.status-badge.pending { background: #fee2e2; color: #991b1b; }
+
+.observations {
+  color: #d97706;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.action-btn {
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-right: 5px;
+  font-size: 0.85rem;
+}
+
+.action-btn.edit { background: #eff6ff; color: #1d4ed8; }
+.action-btn.view { background: #f3f4f6; color: #4b5563; }
+
+.table-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.next-btn {
+  background: transparent;
+  border: 1px solid #ccc;
+  padding: 5px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+}

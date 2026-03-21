@@ -1,7 +1,10 @@
+# Archivo: backend/main.py
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from database import db
-from ml import calcular_riesgo_desvinculacion # <-- Importamos la IA
+from ml import calcular_riesgo_desvinculacion
+from gamificacion import evaluar_logros_y_sugerencias # <-- Importamos el nuevo motor
 
 app = FastAPI(
     title="API de Monitoreo EduVirt",
@@ -32,19 +35,26 @@ def obtener_estudiante(email: str):
     if not estudiante:
         raise HTTPException(status_code=404, detail="Estudiante no encontrado")
     
-    # Buscamos las actividades del estudiante para sumar sus horas de interacción
     actividades = list(db.actividades.find({"estudiante_email": email}, {"_id": 0}))
     total_horas = sum([act.get("tiempo_interaccion_horas", 0) for act in actividades])
     
-    # ¡Magia de la IA! Calculamos el riesgo en tiempo real
+    # 1. IA Predictiva (Riesgo de abandono)
     riesgo_calculado = calcular_riesgo_desvinculacion(
         progreso=estudiante.get("progreso_general", 0),
         horas=total_horas,
         modulos=estudiante.get("modulos_completados", 0)
     )
-    
-    # Sobrescribimos el riesgo estático de la base de datos con la predicción de la IA
     estudiante["riesgo_desvinculacion"] = riesgo_calculado
+    
+    # 2. Gamificación y Sugerencias Inclusivas (CU08)
+    logros_dinamicos, sugerencias_dinamicas = evaluar_logros_y_sugerencias(
+        progreso=estudiante.get("progreso_general", 0),
+        modulos_completados=estudiante.get("modulos_completados", 0),
+        horas=total_horas,
+        perfil=estudiante.get("perfil_inclusivo", {})
+    )
+    estudiante["logros"] = logros_dinamicos
+    estudiante["sugerencias_adaptadas"] = sugerencias_dinamicas
     
     return estudiante
 
