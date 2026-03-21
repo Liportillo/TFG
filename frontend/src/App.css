@@ -90,3 +90,51 @@ body {
   text-align: left;
   border-left: 4px solid #3b82f6;
 }
+
+/* --- MODO ALTO CONTRASTE (WCAG 2.1 - Accesibilidad Inclusiva) --- */
+.alto-contraste {
+  background-color: #121212 !important;
+  color: #ffffff !important;
+  min-height: 100vh;
+}
+
+.alto-contraste .card {
+  background-color: #1e1e1e !important;
+  border-color: #ffff00 !important;
+  box-shadow: 0 4px 15px rgba(255, 255, 0, 0.15);
+}
+
+.alto-contraste h1, 
+.alto-contraste h2, 
+.alto-contraste p, 
+.alto-contraste strong, 
+.alto-contraste span,
+.alto-contraste .perfil-text {
+  color: #ffffff !important;
+}
+
+.alto-contraste .dashboard-header {
+  background-color: #ffff00 !important;
+  color: #000000 !important;
+}
+
+.alto-contraste .dashboard-header h1, 
+.alto-contraste .dashboard-header p, 
+.alto-contraste .dashboard-header strong {
+  color: #000000 !important;
+}
+
+.alto-contraste .progress-text { color: #ffff00 !important; }
+.alto-contraste .risk-level { color: #ff5555 !important; }
+
+.alto-contraste .badge {
+  background-color: #000000 !important;
+  color: #ffff00 !important;
+  border: 1px solid #ffff00;
+}
+
+.alto-contraste .suggestion-item {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border-left: 4px solid #ffff00 !important;
+}

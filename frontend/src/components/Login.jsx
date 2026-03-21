@@ -5,20 +5,43 @@ import { useNavigate } from 'react-router-dom';
 import './Login.css';
 
 const Login = () => {
-  const [email, setEmail] = useState('ana.torres@eduvirt.com');
+  // Campos vacíos para ingreso manual
+  const [email, setEmail] = useState(''); 
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('estudiante');
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    // Lógica RBAC: Redirección según el rol seleccionado
-    if (role === 'estudiante') {
-      navigate('/estudiante');
-    } else if (role === 'docente') {
-      navigate('/docente'); // Aún no existe, la haremos en el próximo paso
-    } else {
-      alert('Rol Administrador en construcción');
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('http://localhost:8000/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, password: password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || 'Error de autenticación');
+      }
+
+      localStorage.setItem('eduvirt_token', data.access_token);
+      localStorage.setItem('eduvirt_role', data.rol);
+      localStorage.setItem('eduvirt_email', data.usuario); 
+
+      if (data.rol === 'estudiante') navigate('/estudiante');
+      else if (data.rol === 'docente') navigate('/docente');
+      else if (data.rol === 'admin') navigate('/admin');
+
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -27,8 +50,10 @@ const Login = () => {
       <div className="login-container-box">
         <div className="login-logo">EV</div>
         <h2>Iniciar Sesión</h2>
-        <p className="login-subtitle">Accede a tu cuenta de EduVirt</p>
+        <p className="login-subtitle">Accede a tu cuenta segura de EduVirt</p>
         
+        {error && <div style={{ color: 'white', background: '#dc2626', padding: '10px', borderRadius: '5px', marginBottom: '15px', fontSize: '0.9rem', fontWeight: 'bold' }}>{error}</div>}
+
         <form onSubmit={handleLogin}>
           <div className="input-group">
             <label>Usuario o Email</label>
@@ -37,6 +62,7 @@ const Login = () => {
               value={email} 
               onChange={(e) => setEmail(e.target.value)} 
               required 
+              placeholder="Ej: ana.torres@eduvirt.com"
             />
           </div>
           
@@ -46,20 +72,14 @@ const Login = () => {
               type="password" 
               value={password} 
               onChange={(e) => setPassword(e.target.value)} 
+              required
               placeholder="Ingresa tu contraseña"
             />
           </div>
           
-          <div className="input-group">
-            <label>Tipo de Usuario</label>
-            <select value={role} onChange={(e) => setRole(e.target.value)}>
-              <option value="estudiante">Estudiante</option>
-              <option value="docente">Docente</option>
-              <option value="admin">Administrador</option>
-            </select>
-          </div>
-          
-          <button type="submit" className="login-btn">Iniciar Sesión</button>
+          <button type="submit" className="login-btn" disabled={loading}>
+            {loading ? "Verificando Seguridad..." : "Iniciar Sesión"}
+          </button>
         </form>
         
         <a href="#" className="forgot-pass">¿Olvidaste tu contraseña?</a>

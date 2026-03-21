@@ -4,19 +4,18 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Login from './components/Login';
 import StudentDashboard from './components/StudentDashboard';
 import DocenteDashboard from './components/DocenteDashboard';
+import AdminDashboard from './components/AdminDashboard';
+import MonitoreoDashboard from './components/MonitoreoDashboard'; // <-- Importamos el Prototipo 4
 
 function App() {
   return (
     <Router>
       <Routes>
-        {/* Ruta principal: Pantalla de Login (Prototipo 1) */}
         <Route path="/" element={<Login />} />
-        
-        {/* Ruta del estudiante: Dashboard Inclusivo (Prototipo 2) */}
         <Route path="/estudiante" element={<StudentDashboard />} />
-        
-        {/* Ruta del docente: Panel de Evaluación (Prototipo 3) */}
         <Route path="/docente" element={<DocenteDashboard />} />
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/monitoreo" element={<MonitoreoDashboard />} /> {/* <-- Nueva Ruta en Vivo */}
       </Routes>
     </Router>
   );
