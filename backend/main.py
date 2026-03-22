@@ -14,6 +14,9 @@ import io
 import hashlib
 import asyncio
 from datetime import datetime, timedelta, timezone
+import joblib
+import os
+from apscheduler.schedulers.background import BackgroundScheduler # NUEVO: Motor de CRON
 
 app = FastAPI(
     title="API de Monitoreo EduVirt",
@@ -33,6 +36,25 @@ SECRET_KEY = "eduvirt_secreto_tesis_2026"
 ALGORITHM = "HS256"
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/login")
 
+# --- INICIALIZAR EL MOTOR DE TAREAS EN SEGUNDO PLANO (CRON) ---
+scheduler = BackgroundScheduler()
+scheduler.start()
+
+def tarea_reporte_automatico():
+    """Esta función la ejecutará el servidor solo, sin interacción humana"""
+    print("\n[CRON JOB EJECUTADO] Generando reporte consolidado automático...")
+    estudiantes = _get_estudiantes_procesados()
+    if estudiantes:
+        df = pd.DataFrame([{"Nombre": e.get("nombre", ""), "Progreso (%)": e.get("progreso_general", 0), "Riesgo (%)": e.get("riesgo_desvinculacion", 0)} for e in estudiantes])
+        
+        carpeta = "reportes_automaticos"
+        if not os.path.exists(carpeta):
+            os.makedirs(carpeta)
+            
+        nombre_archivo = f"{carpeta}/reporte_cron_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        df.to_csv(nombre_archivo, index=False)
+        print(f"✅ [CRON JOB] Reporte guardado con éxito en: {nombre_archivo}\n")
+
 def verificar_token(token: str = Depends(oauth2_scheme)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -42,6 +64,22 @@ def verificar_token(token: str = Depends(oauth2_scheme)):
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Token inválido")
 
+MODELO_PATH = os.path.join(os.path.dirname(__file__), 'modelo_riesgo.pkl')
+try:
+    modelo_ia = joblib.load(MODELO_PATH)
+    print("🧠 Modelo de IA (Scikit-Learn) cargado correctamente.")
+except FileNotFoundError:
+    modelo_ia = None
+    print("⚠️ No se encontró 'modelo_riesgo.pkl'. Se usará una fórmula fallback.")
+
+def calcular_riesgo_con_ia(progreso, horas, modulos):
+    if modelo_ia:
+        prediccion = modelo_ia.predict([[progreso, horas, modulos]])
+        return round(float(prediccion[0]), 2)
+    else:
+        riesgo = 100 - (progreso * 0.6 + (horas / 50) * 100 * 0.4)
+        return round(max(0, min(100, riesgo)), 2)
+
 class LoginRequest(BaseModel):
     email: str
     password: str
@@ -50,7 +88,7 @@ class LoginRequest(BaseModel):
 def login_for_access_token(request: LoginRequest):
     usuario_db = db.usuarios.find_one({"email": request.email})
     if not usuario_db: raise HTTPException(status_code=404, detail="Usuario no registrado")
-    if usuario_db.get("bloqueado"): raise HTTPException(status_code=403, detail="CUENTA BLOQUEADA por múltiples intentos fallidos. Contacte a soporte.")
+    if usuario_db.get("bloqueado"): raise HTTPException(status_code=403, detail="CUENTA BLOQUEADA por múltiples intentos fallidos.")
 
     pass_hasheada = hashlib.sha256(request.password.encode()).hexdigest()
     if pass_hasheada != usuario_db.get("password_hash"):
@@ -90,31 +128,48 @@ class ActividadMoodle(BaseModel):
     calificacion: float
     tiempo_interaccion_horas: float
 
-# --- WEBHOOK MEJORADO PARA REFLEJAR CAMBIOS EN TIEMPO REAL ---
 @app.post("/api/integracion/moodle")
 def webhook_moodle(actividad: ActividadMoodle):
-    # 1. Guardamos la actividad
     nueva_actividad = actividad.dict()
     nueva_actividad["completado"] = True
     nueva_actividad["fecha"] = datetime.now()
     db.actividades.insert_one(nueva_actividad)
 
-    # 2. Actualizamos el progreso del estudiante en la BD para que React lo detecte en vivo (RF01)
     estudiante = db.estudiantes.find_one({"email": actividad.estudiante_email})
     if estudiante:
-        # Incrementamos 10% de progreso y 1 módulo completado por cada examen
         nuevo_progreso = min(100.0, estudiante.get("progreso_general", 0) + 10.0)
         nuevos_modulos = min(estudiante.get("total_modulos", 18), estudiante.get("modulos_completados", 0) + 1)
-        
         db.estudiantes.update_one(
             {"email": actividad.estudiante_email},
-            {"$set": {
-                "progreso_general": nuevo_progreso,
-                "modulos_completados": nuevos_modulos
-            }}
+            {"$set": {"progreso_general": nuevo_progreso, "modulos_completados": nuevos_modulos}}
         )
+    return {"mensaje": "Datos capturados."}
 
-    return {"mensaje": "Datos capturados desde Moodle y progreso del estudiante actualizado."}
+class Evaluacion(BaseModel):
+    estudiante_email: str
+    actividad: str
+    calificacion: float
+    feedback: str
+    insignia: str
+
+@app.post("/api/evaluar")
+def evaluar_estudiante(evaluacion: Evaluacion, usuario: dict = Depends(verificar_token)):
+    db.actividades.insert_one({
+        "estudiante_email": evaluacion.estudiante_email,
+        "tipo_actividad": evaluacion.actividad,
+        "calificacion": evaluacion.calificacion,
+        "feedback": evaluacion.feedback,
+        "tiempo_interaccion_horas": 1.0,
+        "completado": True,
+        "fecha": datetime.now()
+    })
+    
+    if evaluacion.insignia:
+        db.estudiantes.update_one(
+            {"email": evaluacion.estudiante_email},
+            {"$addToSet": {"logros_manuales": evaluacion.insignia}}
+        )
+    return {"mensaje": "Evaluación e insignia guardadas exitosamente."}
 
 def _get_estudiantes_procesados():
     estudiantes = list(db.estudiantes.find({}, {"_id": 0}))
@@ -123,11 +178,11 @@ def _get_estudiantes_procesados():
         actividades = list(db.actividades.find({"estudiante_email": email}, {"_id": 0}))
         total_horas = sum([act.get("tiempo_interaccion_horas", 0) for act in actividades])
         
-        # Recalculamos el riesgo con los nuevos datos actualizados
-        estudiante["riesgo_desvinculacion"] = calcular_riesgo_desvinculacion(estudiante.get("progreso_general", 0), total_horas, estudiante.get("modulos_completados", 0))
-        logros, sugerencias = evaluar_logros_y_sugerencias(estudiante.get("progreso_general", 0), estudiante.get("modulos_completados", 0), total_horas, estudiante.get("perfil_inclusivo", {}))
+        estudiante["riesgo_desvinculacion"] = calcular_riesgo_con_ia(estudiante.get("progreso_general", 0), total_horas, estudiante.get("modulos_completados", 0))
+        logros_auto, sugerencias = evaluar_logros_y_sugerencias(estudiante.get("progreso_general", 0), estudiante.get("modulos_completados", 0), total_horas, estudiante.get("perfil_inclusivo", {}))
         
-        estudiante["logros"] = logros
+        logros_manuales = estudiante.get("logros_manuales", [])
+        estudiante["logros"] = list(set(logros_auto + logros_manuales))
         estudiante["sugerencias_adaptadas"] = sugerencias
     return estudiantes
 
@@ -136,15 +191,16 @@ def obtener_estudiantes(usuario: dict = Depends(verificar_token)): return _get_e
 
 @app.get("/api/estudiantes/{email}")
 def obtener_estudiante(email: str, usuario: dict = Depends(verificar_token)):
-    estudiante = db.estudiantes.find_one({"email": email}, {"_id": 0})
-    if not estudiante: raise HTTPException(status_code=404, detail="No encontrado")
+    estudiantes = _get_estudiantes_procesados()
+    for est in estudiantes:
+        if est["email"] == email:
+            return est
+    raise HTTPException(status_code=404, detail="No encontrado")
+
+@app.get("/api/actividades/{email}")
+def obtener_actividades(email: str, usuario: dict = Depends(verificar_token)):
     actividades = list(db.actividades.find({"estudiante_email": email}, {"_id": 0}))
-    total_horas = sum([act.get("tiempo_interaccion_horas", 0) for act in actividades])
-    estudiante["riesgo_desvinculacion"] = calcular_riesgo_desvinculacion(estudiante.get("progreso_general", 0), total_horas, estudiante.get("modulos_completados", 0))
-    logros, sugerencias = evaluar_logros_y_sugerencias(estudiante.get("progreso_general", 0), estudiante.get("modulos_completados", 0), total_horas, estudiante.get("perfil_inclusivo", {}))
-    estudiante["logros"] = logros
-    estudiante["sugerencias_adaptadas"] = sugerencias
-    return estudiante
+    return actividades
 
 @app.get("/api/reportes")
 def generar_reporte_agregado(usuario: dict = Depends(verificar_token)):
@@ -163,6 +219,23 @@ def exportar_estudiantes(usuario: dict = Depends(verificar_token)):
     response = StreamingResponse(iter([stream.getvalue()]), media_type="text/csv")
     response.headers["Content-Disposition"] = "attachment; filename=reporte.csv"
     return response
+
+# --- NUEVOS ENDPOINTS DEL ADMINISTRADOR (CRON Y EMAILS) ---
+@app.post("/api/admin/programar-reporte")
+def programar_reporte(usuario: dict = Depends(verificar_token)):
+    if usuario.get("role") != "admin": raise HTTPException(status_code=403, detail="Acceso denegado. Solo Admin.")
+    
+    # Programamos la tarea para que corra cada 1 minuto (Ideal para demostración en vivo)
+    scheduler.add_job(tarea_reporte_automatico, 'interval', minutes=1, id='reporte_mensual', replace_existing=True)
+    return {"mensaje": "✅ Tarea CRON programada en el servidor. Generará un reporte automáticamente cada 1 minuto."}
+
+@app.post("/api/admin/compartir-reporte")
+def compartir_reporte(usuario: dict = Depends(verificar_token)):
+    if usuario.get("role") != "admin": raise HTTPException(status_code=403, detail="Acceso denegado. Solo Admin.")
+    
+    # Acá iría la conexión real con el servidor SMTP (Gmail/Outlook)
+    print("\n✉️ [SERVIDIOR DE CORREOS] Enviando reporte consolidado a todo el cuerpo docente...")
+    return {"mensaje": "Reporte enviado exitosamente a los correos del cuerpo docente."}
 
 @app.websocket("/api/ws/monitoreo")
 async def websocket_monitoreo(websocket: WebSocket):

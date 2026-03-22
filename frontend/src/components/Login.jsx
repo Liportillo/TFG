@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import './Login.css';
 
 const Login = () => {
-  // Campos vacíos para ingreso manual
   const [email, setEmail] = useState(''); 
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
@@ -42,6 +41,15 @@ const Login = () => {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRecuperarPass = (e) => {
+    e.preventDefault();
+    if (!email) {
+      alert("Por favor, ingresa tu email arriba y luego presiona este enlace.");
+    } else {
+      alert(`Simulación: Se ha enviado un enlace de recuperación de contraseña al correo externo ${email}.`);
     }
   };
 
@@ -82,7 +90,7 @@ const Login = () => {
           </button>
         </form>
         
-        <a href="#" className="forgot-pass">¿Olvidaste tu contraseña?</a>
+        <a href="#" className="forgot-pass" onClick={handleRecuperarPass}>¿Olvidaste tu contraseña?</a>
       </div>
     </div>
   );

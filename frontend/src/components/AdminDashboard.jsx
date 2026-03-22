@@ -1,3 +1,5 @@
+// Archivo: frontend/src/components/AdminDashboard.jsx
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './AdminDashboard.css';
@@ -22,6 +24,35 @@ const AdminDashboard = () => {
       console.error("Error al generar el reporte:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // NUEVO: Funciones conectadas al Backend Real
+  const activarCompartir = async () => {
+    const token = localStorage.getItem('eduvirt_token');
+    try {
+      const res = await fetch('http://localhost:8000/api/admin/compartir-reporte', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      alert(data.mensaje);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const activarCron = async () => {
+    const token = localStorage.getItem('eduvirt_token');
+    try {
+      const res = await fetch('http://localhost:8000/api/admin/programar-reporte', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      alert(data.mensaje);
+    } catch (error) {
+      console.error(error);
     }
   };
 
@@ -123,8 +154,9 @@ const AdminDashboard = () => {
 
           <section className="actions-section card">
             <h2>Acciones Rápidas</h2>
-            <button className="action-button secondary">✉️ Compartir con docentes</button>
-            <button className="action-button primary">⚙️ Programar reporte recurrente</button>
+            {/* Botones ahora conectados a la API */}
+            <button className="action-button secondary" onClick={activarCompartir}>✉️ Compartir con docentes</button>
+            <button className="action-button primary" onClick={activarCron}>⚙️ Programar reporte recurrente</button>
           </section>
         </div>
       </div>
