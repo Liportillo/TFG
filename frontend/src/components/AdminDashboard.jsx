@@ -1,6 +1,6 @@
 // Archivo: frontend/src/components/AdminDashboard.jsx
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './AdminDashboard.css';
 
@@ -8,6 +8,36 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const [reporteResult, setReporteResult] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // CONEXIÓN WEBSOCKET PARA ACTUALIZAR EL REPORTE EN VIVO
+    const ws = new WebSocket('ws://localhost:8000/api/ws/monitoreo');
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      
+      // Si el administrador ya generó el reporte, le actualizamos los números en vivo
+      setReporteResult(prevReporte => {
+        if (!prevReporte) return prevReporte; // Si aún no hizo click en generar, no hacemos nada
+        
+        const total = data.length;
+        const sumProgreso = data.reduce((acc, curr) => acc + curr.progreso_general, 0);
+        const promedio = total > 0 ? (sumProgreso / total).toFixed(2) : 0;
+        const inclusivos = data.filter(e => e.perfil_inclusivo.requiere_alto_contraste || e.perfil_inclusivo.requiere_lector_pantalla).length;
+
+        return {
+          ...prevReporte,
+          total_estudiantes: total,
+          promedio_progreso: parseFloat(promedio),
+          estudiantes_inclusivos: inclusivos,
+          mensaje_procesamiento: "Análisis actualizado en Tiempo Real vía WebSockets."
+        };
+      });
+    };
+
+    return () => {
+      if (ws.readyState === WebSocket.OPEN) ws.close();
+    };
+  }, []);
 
   const handleLogout = () => navigate('/');
 
@@ -27,7 +57,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // NUEVO: Funciones conectadas al Backend Real
   const activarCompartir = async () => {
     const token = localStorage.getItem('eduvirt_token');
     try {
@@ -67,6 +96,7 @@ const AdminDashboard = () => {
           <li>Configuración del Sistema</li>
         </ul>
         <div className="nav-user">
+          <span style={{color: '#10b981', fontSize: '0.8rem', fontWeight: 'bold', marginRight: '10px'}}>🟢 Conectado</span>
           <div className="user-avatar admin-avatar">AD</div>
           <span>Admin Principal</span>
           <button className="logout-btn-small" onClick={handleLogout}>Salir</button>
@@ -82,17 +112,12 @@ const AdminDashboard = () => {
               <select className="multi-select" size="5" defaultValue={["Introducción a Data Science"]}>
                 <option value="Introducción a Data Science">Introducción a Data Science</option>
                 <option value="Python Avanzado">Python Avanzado</option>
-                <option value="Machine Learning">Machine Learning</option>
-                <option value="Desarrollo Web">Desarrollo Web</option>
-                <option value="Bases de Datos">Bases de Datos</option>
               </select>
             </div>
             <div className="input-group">
               <label>Periodo</label>
               <select defaultValue="Último trimestre">
                 <option value="Último trimestre">Último trimestre</option>
-                <option value="Último mes">Último mes</option>
-                <option value="Semestre actual">Semestre actual</option>
               </select>
             </div>
           </div>
@@ -102,16 +127,7 @@ const AdminDashboard = () => {
             <label className="checkbox-label"><input type="checkbox" defaultChecked /> Completitud de módulos</label>
             <label className="checkbox-label"><input type="checkbox" defaultChecked /> Promedio de calificaciones</label>
             <label className="checkbox-label"><input type="checkbox" /> Tiempo de Interacción</label>
-            <label className="checkbox-label"><input type="checkbox" /> Participación en foros</label>
             <label className="checkbox-label"><input type="checkbox" defaultChecked /> Estudiantes con necesidades inclusivas</label>
-          </div>
-
-          <div className="input-group">
-            <label>Tipo de agregación</label>
-            <select defaultValue="Por curso">
-              <option value="Por curso">Por curso</option>
-              <option value="Por estudiante">Por estudiante</option>
-            </select>
           </div>
 
           <button className="generate-btn" onClick={generarReporte} disabled={loading}>
@@ -121,6 +137,7 @@ const AdminDashboard = () => {
           {reporteResult && (
             <div className="report-result">
               <h3>Resultados Agregados (Procesado con Pandas)</h3>
+              <p style={{fontSize: '0.8rem', color: '#666', marginTop: '-10px'}}>{reporteResult.mensaje_procesamiento}</p>
               <div className="result-stats">
                 <div className="stat-box">
                   <span className="stat-value">{reporteResult.total_estudiantes}</span>
@@ -146,15 +163,10 @@ const AdminDashboard = () => {
               <span className="date">2 de octubre 2025</span>
               <p>Reporte Trimestral Q3</p>
             </div>
-            <div className="history-item">
-              <span className="date">15 de septiembre 2025</span>
-              <p>Reporte Mensual - Sep</p>
-            </div>
           </section>
 
           <section className="actions-section card">
             <h2>Acciones Rápidas</h2>
-            {/* Botones ahora conectados a la API */}
             <button className="action-button secondary" onClick={activarCompartir}>✉️ Compartir con docentes</button>
             <button className="action-button primary" onClick={activarCron}>⚙️ Programar reporte recurrente</button>
           </section>

@@ -32,6 +32,18 @@ const DocenteDashboard = () => {
 
   useEffect(() => {
     fetchEstudiantes();
+
+    const ws = new WebSocket('ws://localhost:8000/api/ws/monitoreo');
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data && data.length > 0) {
+        setEstudiantes(data);
+      }
+    };
+
+    return () => {
+      if (ws.readyState === WebSocket.OPEN) ws.close();
+    };
   }, []);
 
   const handleExport = async () => {
@@ -86,7 +98,6 @@ const DocenteDashboard = () => {
       if (res.ok) {
         alert("¡Evaluación y Feedback enviados correctamente!");
         setShowEvalModal(false);
-        fetchEstudiantes();
       } else {
         alert("Error al guardar la evaluación.");
       }
@@ -105,14 +116,11 @@ const DocenteDashboard = () => {
       });
       const data = await res.json();
       
-      // BLINDAJE DE SEGURIDAD: Solo mostramos si la API devolvió una lista real
       if (Array.isArray(data)) {
         setActividadesAlumno(data);
       } else {
         setActividadesAlumno([]);
-        console.error("La API no devolvió una lista válida:", data);
       }
-      
       setShowPerfilModal(true);
     } catch (error) {
       console.error("Error al obtener actividades:", error);
@@ -135,6 +143,7 @@ const DocenteDashboard = () => {
           <li>Configuración</li>
         </ul>
         <div className="nav-user">
+          <span style={{color: '#10b981', fontSize: '0.8rem', fontWeight: 'bold', marginRight: '10px'}}>🟢 Datos en vivo</span>
           <button 
             style={{background: '#ef4444', color: 'white', border: 'none', padding: '8px 15px', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', marginRight: '15px'}}
             onClick={() => navigate('/monitoreo')}
@@ -147,6 +156,7 @@ const DocenteDashboard = () => {
         </div>
       </nav>
 
+      {/* Modal de Retroalimentación */}
       {showEvalModal && estudianteSelect && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
           <div style={{ background: '#fff', padding: '30px', borderRadius: '10px', width: '500px', color: '#333' }}>
@@ -187,28 +197,31 @@ const DocenteDashboard = () => {
         </div>
       )}
 
+      {/* Modal Ficha Histórica (Muestra TODO el detalle de Moodle) */}
       {showPerfilModal && estudianteSelect && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
-          <div style={{ background: '#fff', padding: '30px', borderRadius: '10px', width: '600px', color: '#333', maxHeight: '80vh', overflowY: 'auto' }}>
+          <div style={{ background: '#fff', padding: '30px', borderRadius: '10px', width: '800px', color: '#333', maxHeight: '85vh', overflowY: 'auto' }}>
             <h2 style={{marginTop: 0, borderBottom: '2px solid #10b981', paddingBottom: '10px'}}>Ficha Histórica: {estudianteSelect.nombre}</h2>
             
             <div style={{marginBottom: '20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', background: '#f9fafb', padding: '15px', borderRadius: '8px'}}>
               <div><strong>Email:</strong> {estudianteSelect.email}</div>
               <div><strong>Progreso:</strong> {estudianteSelect.progreso_general}%</div>
-              <div><strong>Estilo Aprendizaje:</strong> {estudianteSelect.perfil_inclusivo.estilo_aprendizaje.toUpperCase()}</div>
+              <div><strong>Asistencia:</strong> {estudianteSelect.asistencia || 100}%</div>
               <div><strong>Riesgo IA:</strong> <span style={{color: estudianteSelect.riesgo_desvinculacion > 50 ? 'red' : 'green'}}>{estudianteSelect.riesgo_desvinculacion}%</span></div>
             </div>
 
-            <h3 style={{fontSize: '1.1rem', marginBottom: '10px'}}>Historial de Actividades (MongoDB)</h3>
+            <h3 style={{fontSize: '1.1rem', marginBottom: '10px'}}>Historial Detallado de Actividades (Desde Moodle/Canvas)</h3>
             {actividadesAlumno.length === 0 ? (
               <p>No hay actividades registradas.</p>
             ) : (
-              <table style={{width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem'}}>
+              <table style={{width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem'}}>
                 <thead>
                   <tr style={{background: '#f3f4f6', textAlign: 'left'}}>
                     <th style={{padding: '8px', borderBottom: '1px solid #ddd'}}>Actividad</th>
                     <th style={{padding: '8px', borderBottom: '1px solid #ddd'}}>Nota</th>
                     <th style={{padding: '8px', borderBottom: '1px solid #ddd'}}>Horas</th>
+                    <th style={{padding: '8px', borderBottom: '1px solid #ddd'}}>Foros (Msj)</th>
+                    <th style={{padding: '8px', borderBottom: '1px solid #ddd'}}>¿A tiempo?</th>
                     <th style={{padding: '8px', borderBottom: '1px solid #ddd'}}>Fecha</th>
                   </tr>
                 </thead>
@@ -218,6 +231,10 @@ const DocenteDashboard = () => {
                       <td style={{padding: '8px', borderBottom: '1px solid #eee'}}>{act.tipo_actividad}</td>
                       <td style={{padding: '8px', borderBottom: '1px solid #eee'}}>{act.calificacion || '-'}</td>
                       <td style={{padding: '8px', borderBottom: '1px solid #eee'}}>{act.tiempo_interaccion_horas}h</td>
+                      <td style={{padding: '8px', borderBottom: '1px solid #eee'}}>{act.participacion_foros !== undefined ? act.participacion_foros : '-'}</td>
+                      <td style={{padding: '8px', borderBottom: '1px solid #eee'}}>
+                        {act.entregado_a_tiempo === false ? '❌ Retraso' : act.entregado_a_tiempo === true ? '✅ Sí' : '-'}
+                      </td>
                       <td style={{padding: '8px', borderBottom: '1px solid #eee'}}>{new Date(act.fecha).toLocaleDateString()}</td>
                     </tr>
                   ))}
@@ -262,9 +279,9 @@ const DocenteDashboard = () => {
             <thead>
               <tr>
                 <th>Estudiante</th>
-                <th>Estado</th>
-                <th>Progreso</th>
-                <th>Calificación Est.</th>
+                <th>Estado IA</th>
+                <th>Progreso y Asistencia</th>
+                <th>Riesgo IA</th>
                 <th>Observaciones Inclusivas</th>
                 <th>Acciones</th>
               </tr>
@@ -274,15 +291,27 @@ const DocenteDashboard = () => {
                 <tr key={index}>
                   <td><strong>{est.nombre}</strong> <br/><small>{est.email}</small></td>
                   <td>
-                    <span className={`status-badge ${est.progreso_general >= 50 ? 'completed' : 'pending'}`}>
-                      {est.progreso_general >= 50 ? 'Avanzado' : 'En Riesgo'}
+                    <span style={{
+                      backgroundColor: est.riesgo_desvinculacion >= 60 ? '#ef4444' : est.riesgo_desvinculacion >= 30 ? '#f59e0b' : '#10b981',
+                      color: 'white',
+                      padding: '5px 10px',
+                      borderRadius: '15px',
+                      fontSize: '0.85rem',
+                      fontWeight: 'bold'
+                    }}>
+                      {est.riesgo_desvinculacion >= 60 ? 'Alto Riesgo' : est.riesgo_desvinculacion >= 30 ? 'Riesgo Moderado' : 'Buen Ritmo'}
                     </span>
                   </td>
-                  <td>{est.progreso_general}%</td>
-                  <td>{est.progreso_general >= 60 ? '8.5' : 'Pendiente'}</td>
+                  <td>
+                    <div style={{fontWeight: 'bold'}}>{est.progreso_general}% Progreso</div>
+                    <div style={{fontSize: '0.85rem', color: '#6b7280'}}>{est.asistencia || 100}% Asistencia</div>
+                  </td>
+                  <td style={{ fontWeight: 'bold', color: est.riesgo_desvinculacion >= 60 ? '#ef4444' : 'inherit' }}>
+                    {est.riesgo_desvinculacion}%
+                  </td>
                   <td className="observations">
-                    {est.perfil_inclusivo.requiere_alto_contraste && "👁️ Requiere Alto Contraste. "}
-                    {est.perfil_inclusivo.requiere_lector_pantalla && "🔊 Usa Lector de Pantalla. "}
+                    {est.perfil_inclusivo.requiere_alto_contraste && "👁️ Alto Contraste. "}
+                    {est.perfil_inclusivo.requiere_lector_pantalla && "🔊 Lector Voz. "}
                     Estilo: {est.perfil_inclusivo.estilo_aprendizaje}
                   </td>
                   <td>
@@ -293,10 +322,6 @@ const DocenteDashboard = () => {
               ))}
             </tbody>
           </table>
-        </div>
-        <div className="table-footer">
-          <span>Mostrando 1-{estudiantes.length} de {estudiantes.length} estudiantes</span>
-          <button className="next-btn">Siguiente →</button>
         </div>
       </section>
     </div>

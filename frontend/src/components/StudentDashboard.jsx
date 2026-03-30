@@ -22,6 +22,7 @@ const StudentDashboard = () => {
 
     if (!email) return navigate('/');
 
+    // Carga inicial rápida
     fetch(`http://localhost:8000/api/estudiantes/${email}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
@@ -38,6 +39,23 @@ const StudentDashboard = () => {
 
   useEffect(() => {
     fetchEstudiante();
+    const email = localStorage.getItem('eduvirt_email');
+
+    // CONEXIÓN WEBSOCKET PARA TIEMPO REAL
+    const ws = new WebSocket('ws://localhost:8000/api/ws/monitoreo');
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      // Buscamos los datos específicos del alumno logueado
+      const miData = data.find(e => e.email === email);
+      if (miData) {
+        setEstudiante(miData);
+        setFormConfig(miData.perfil_inclusivo);
+      }
+    };
+
+    return () => {
+      if (ws.readyState === WebSocket.OPEN) ws.close();
+    };
   }, [navigate]);
 
   const handleGuardarConfig = async (e) => {
@@ -56,7 +74,7 @@ const StudentDashboard = () => {
       });
       if (res.ok) {
         setShowConfig(false);
-        fetchEstudiante(); // Recargamos para aplicar los cambios visuales
+        fetchEstudiante(); 
       } else {
         alert("Error al guardar preferencias");
       }
@@ -98,7 +116,6 @@ const StudentDashboard = () => {
         </div>
       </header>
 
-      {/* MODAL DE CONFIGURACIÓN DE PERFIL INCLUSIVO (RF04) */}
       {showConfig && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
           <div style={{ background: '#fff', padding: '30px', borderRadius: '10px', width: '400px', color: '#333' }}>
@@ -147,7 +164,7 @@ const StudentDashboard = () => {
 
       <main className="dashboard-grid" role="main">
         <div className="card progress-card" aria-labelledby="progreso-titulo">
-          <h2 id="progreso-titulo">Progreso General</h2>
+          <h2 id="progreso-titulo">Progreso General (En Vivo)</h2>
           <div className="progress-circle" aria-hidden="true">
             <ProgressChart percentage={estudiante.progreso_general} />
           </div>
