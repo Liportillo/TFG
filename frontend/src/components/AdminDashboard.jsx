@@ -8,81 +8,66 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const [reporteResult, setReporteResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  
+  const role = localStorage.getItem('eduvirt_role');
 
   useEffect(() => {
-    // CONEXIÓN WEBSOCKET PARA ACTUALIZAR EL REPORTE EN VIVO
+    // Redirección silenciosa e inmediata
+    if (role !== 'admin') {
+      navigate('/');
+      return;
+    }
+
     const ws = new WebSocket('ws://localhost:8000/api/ws/monitoreo');
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      
-      // Si el administrador ya generó el reporte, le actualizamos los números en vivo
       setReporteResult(prevReporte => {
-        if (!prevReporte) return prevReporte; // Si aún no hizo click en generar, no hacemos nada
-        
+        if (!prevReporte) return prevReporte; 
         const total = data.length;
         const sumProgreso = data.reduce((acc, curr) => acc + curr.progreso_general, 0);
         const promedio = total > 0 ? (sumProgreso / total).toFixed(2) : 0;
         const inclusivos = data.filter(e => e.perfil_inclusivo.requiere_alto_contraste || e.perfil_inclusivo.requiere_lector_pantalla).length;
-
-        return {
-          ...prevReporte,
-          total_estudiantes: total,
-          promedio_progreso: parseFloat(promedio),
-          estudiantes_inclusivos: inclusivos,
-          mensaje_procesamiento: "Análisis actualizado en Tiempo Real vía WebSockets."
-        };
+        return { ...prevReporte, total_estudiantes: total, promedio_progreso: parseFloat(promedio), estudiantes_inclusivos: inclusivos, mensaje_procesamiento: "Análisis actualizado en Tiempo Real vía WebSockets." };
       });
     };
+    return () => { if (ws.readyState === WebSocket.OPEN) ws.close(); };
+  }, [navigate, role]);
 
-    return () => {
-      if (ws.readyState === WebSocket.OPEN) ws.close();
-    };
-  }, []);
+  // Si no es admin, no dibuja absolutamente nada
+  if (role !== 'admin') return null;
 
-  const handleLogout = () => navigate('/');
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate('/');
+  };
 
   const generarReporte = async () => {
     setLoading(true);
     const token = localStorage.getItem('eduvirt_token');
     try {
-      const res = await fetch('http://localhost:8000/api/reportes', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const res = await fetch('http://localhost:8000/api/reportes', { headers: { 'Authorization': `Bearer ${token}` } });
       const data = await res.json();
       setReporteResult(data);
-    } catch (error) {
-      console.error("Error al generar el reporte:", error);
-    } finally {
-      setLoading(false);
-    }
+    } catch (error) { console.error("Error al generar el reporte:", error); } 
+    finally { setLoading(false); }
   };
 
   const activarCompartir = async () => {
     const token = localStorage.getItem('eduvirt_token');
     try {
-      const res = await fetch('http://localhost:8000/api/admin/compartir-reporte', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const res = await fetch('http://localhost:8000/api/admin/compartir-reporte', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
       const data = await res.json();
       alert(data.mensaje);
-    } catch (error) {
-      console.error(error);
-    }
+    } catch (error) { console.error(error); }
   };
 
   const activarCron = async () => {
     const token = localStorage.getItem('eduvirt_token');
     try {
-      const res = await fetch('http://localhost:8000/api/admin/programar-reporte', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const res = await fetch('http://localhost:8000/api/admin/programar-reporte', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
       const data = await res.json();
       alert(data.mensaje);
-    } catch (error) {
-      console.error(error);
-    }
+    } catch (error) { console.error(error); }
   };
 
   return (

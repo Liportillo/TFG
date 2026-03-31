@@ -9,110 +9,67 @@ const StudentDashboard = () => {
   const [estudiante, setEstudiante] = useState(null)
   const [error, setError] = useState(null)
   const [showConfig, setShowConfig] = useState(false);
-  const [formConfig, setFormConfig] = useState({
-    requiere_alto_contraste: false,
-    requiere_lector_pantalla: false,
-    estilo_aprendizaje: 'visual'
-  });
+  const [formConfig, setFormConfig] = useState({ requiere_alto_contraste: false, requiere_lector_pantalla: false, estilo_aprendizaje: 'visual' });
   const navigate = useNavigate();
-
-  const fetchEstudiante = () => {
-    const token = localStorage.getItem('eduvirt_token');
-    const email = localStorage.getItem('eduvirt_email');
-
-    if (!email) return navigate('/');
-
-    // Carga inicial rápida
-    fetch(`http://localhost:8000/api/estudiantes/${email}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-      .then(res => {
-        if (!res.ok) throw new Error('Error al conectar con la API')
-        return res.json()
-      })
-      .then(data => {
-        setEstudiante(data);
-        setFormConfig(data.perfil_inclusivo);
-      })
-      .catch(err => setError(err.message));
-  };
+  
+  const role = localStorage.getItem('eduvirt_role');
 
   useEffect(() => {
-    fetchEstudiante();
-    const email = localStorage.getItem('eduvirt_email');
+    // Redirección silenciosa e inmediata
+    if (role !== 'estudiante') {
+      navigate('/');
+      return;
+    }
 
-    // CONEXIÓN WEBSOCKET PARA TIEMPO REAL
+    const token = localStorage.getItem('eduvirt_token');
+    const email = localStorage.getItem('eduvirt_email');
+    if (!email) {
+      navigate('/');
+      return;
+    }
+
+    fetch(`http://localhost:8000/api/estudiantes/${email}`, { headers: { 'Authorization': `Bearer ${token}` } })
+      .then(res => { if (!res.ok) throw new Error('Error API'); return res.json() })
+      .then(data => { setEstudiante(data); setFormConfig(data.perfil_inclusivo); })
+      .catch(err => setError(err.message));
+
     const ws = new WebSocket('ws://localhost:8000/api/ws/monitoreo');
     ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      // Buscamos los datos específicos del alumno logueado
-      const miData = data.find(e => e.email === email);
-      if (miData) {
-        setEstudiante(miData);
-        setFormConfig(miData.perfil_inclusivo);
-      }
+      const miData = JSON.parse(event.data).find(e => e.email === email);
+      if (miData) { setEstudiante(miData); setFormConfig(miData.perfil_inclusivo); }
     };
+    return () => { if (ws.readyState === WebSocket.OPEN) ws.close(); };
+  }, [navigate, role]);
 
-    return () => {
-      if (ws.readyState === WebSocket.OPEN) ws.close();
-    };
-  }, [navigate]);
+  // Si no es estudiante, no dibuja absolutamente nada en pantalla (evita pantallazos)
+  if (role !== 'estudiante') return null;
 
   const handleGuardarConfig = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem('eduvirt_token');
-    const email = localStorage.getItem('eduvirt_email');
-
     try {
-      const res = await fetch(`http://localhost:8000/api/estudiantes/${email}/perfil`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+      const res = await fetch(`http://localhost:8000/api/estudiantes/${localStorage.getItem('eduvirt_email')}/perfil`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('eduvirt_token')}` },
         body: JSON.stringify(formConfig)
       });
-      if (res.ok) {
-        setShowConfig(false);
-        fetchEstudiante(); 
-      } else {
-        alert("Error al guardar preferencias");
+      if (res.ok) { 
+        setShowConfig(false); 
+        fetch(`http://localhost:8000/api/estudiantes/${localStorage.getItem('eduvirt_email')}`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('eduvirt_token')}` } })
+          .then(r => r.json()).then(d => setEstudiante(d));
       }
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const leerDashboardVozAlta = () => {
-    if (!estudiante) return;
-    const texto = `Hola ${estudiante.nombre}. Tu progreso general es del ${estudiante.progreso_general} por ciento. 
-      La inteligencia artificial te sugiere: ${estudiante.sugerencias_adaptadas[0] || 'Continúa así.'}`;
-    const utterance = new SpeechSynthesisUtterance(texto);
-    utterance.lang = 'es-ES'; 
-    window.speechSynthesis.speak(utterance);
-  };
-
-  const handleLogout = () => {
-    localStorage.clear();
-    navigate('/');
+    } catch (err) { console.error(err); }
   };
 
   if (error) return <div className="error">Error: {error}</div>
-  if (!estudiante) return <div className="loading" aria-live="polite">Cargando el dashboard inclusivo...</div>
-
-  const requiereAltoContraste = estudiante.perfil_inclusivo?.requiere_alto_contraste;
-  const requiereLector = estudiante.perfil_inclusivo?.requiere_lector_pantalla;
+  if (!estudiante) return <div className="loading">Cargando dashboard...</div>
 
   return (
-    <div className={`dashboard-container ${requiereAltoContraste ? 'alto-contraste' : ''}`}>
-      <header className="dashboard-header" role="banner">
+    <div className={`dashboard-container ${estudiante.perfil_inclusivo?.requiere_alto_contraste ? 'alto-contraste' : ''}`}>
+      <header className="dashboard-header">
         <h1>EduVirt</h1>
         <div className="user-profile" style={{display: 'flex', alignItems: 'center', gap: '15px'}}>
           <p>Bienvenido/a, <strong>{estudiante.nombre}</strong></p>
-          <button onClick={() => setShowConfig(true)} style={{padding: '5px 10px', borderRadius: '5px', cursor: 'pointer', background: 'white', color: 'black', border: 'none', fontWeight: 'bold'}}>
-            ⚙️ Preferencias
-          </button>
-          <button onClick={handleLogout} style={{padding: '5px 10px', borderRadius: '5px', cursor: 'pointer', background: 'transparent', color: 'inherit', border: '1px solid currentColor'}}>Salir</button>
+          <button onClick={() => setShowConfig(true)} style={{padding: '5px 10px', borderRadius: '5px', background: 'white', color: 'black', border: 'none'}}>⚙️ Preferencias</button>
+          <button onClick={() => {localStorage.clear(); navigate('/');}} style={{padding: '5px 10px', borderRadius: '5px', background: 'transparent', color: 'inherit', border: '1px solid currentColor'}}>Salir</button>
         </div>
       </header>
 
@@ -121,83 +78,54 @@ const StudentDashboard = () => {
           <div style={{ background: '#fff', padding: '30px', borderRadius: '10px', width: '400px', color: '#333' }}>
             <h2 style={{marginTop: 0}}>Configuración Inclusiva</h2>
             <form onSubmit={handleGuardarConfig}>
-              <div style={{marginBottom: '15px'}}>
-                <label style={{display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer'}}>
-                  <input type="checkbox" checked={formConfig.requiere_alto_contraste} onChange={(e) => setFormConfig({...formConfig, requiere_alto_contraste: e.target.checked})} />
-                  Modo Alto Contraste
-                </label>
-              </div>
-              <div style={{marginBottom: '15px'}}>
-                <label style={{display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer'}}>
-                  <input type="checkbox" checked={formConfig.requiere_lector_pantalla} onChange={(e) => setFormConfig({...formConfig, requiere_lector_pantalla: e.target.checked})} />
-                  Activar Lector de Pantalla
-                </label>
-              </div>
-              <div style={{marginBottom: '20px'}}>
-                <label style={{display: 'block', marginBottom: '5px', fontWeight: 'bold'}}>Estilo de Aprendizaje Principal</label>
-                <select style={{width: '100%', padding: '8px'}} value={formConfig.estilo_aprendizaje} onChange={(e) => setFormConfig({...formConfig, estilo_aprendizaje: e.target.value})}>
-                  <option value="visual">Visual</option>
-                  <option value="auditivo">Auditivo</option>
-                  <option value="kinestesico">Kinestésico</option>
-                </select>
-              </div>
-              <div style={{display: 'flex', justifyContent: 'flex-end', gap: '10px'}}>
-                <button type="button" onClick={() => setShowConfig(false)} style={{padding: '8px 15px', border: '1px solid #ccc', background: 'transparent', cursor: 'pointer', borderRadius: '5px'}}>Cancelar</button>
-                <button type="submit" style={{padding: '8px 15px', border: 'none', background: '#3b82f6', color: 'white', fontWeight: 'bold', cursor: 'pointer', borderRadius: '5px'}}>Guardar Cambios</button>
-              </div>
+              <div style={{marginBottom: '15px'}}><label><input type="checkbox" checked={formConfig.requiere_alto_contraste} onChange={(e) => setFormConfig({...formConfig, requiere_alto_contraste: e.target.checked})} /> Alto Contraste</label></div>
+              <div style={{marginBottom: '15px'}}><label><input type="checkbox" checked={formConfig.requiere_lector_pantalla} onChange={(e) => setFormConfig({...formConfig, requiere_lector_pantalla: e.target.checked})} /> Lector Pantalla</label></div>
+              <div style={{marginBottom: '20px'}}><label>Estilo de Aprendizaje</label><select style={{width: '100%', padding: '8px'}} value={formConfig.estilo_aprendizaje} onChange={(e) => setFormConfig({...formConfig, estilo_aprendizaje: e.target.value})}><option value="visual">Visual</option><option value="auditivo">Auditivo</option><option value="kinestesico">Kinestésico</option></select></div>
+              <div style={{display: 'flex', justifyContent: 'flex-end', gap: '10px'}}><button type="button" onClick={() => setShowConfig(false)}>Cancelar</button><button type="submit" style={{background: '#3b82f6', color: 'white'}}>Guardar</button></div>
             </form>
           </div>
         </div>
       )}
 
-      {requiereLector && (
-        <div style={{marginBottom: '20px', textAlign: 'center'}}>
-          <button 
-            onClick={leerDashboardVozAlta}
-            aria-label="Escuchar resumen del dashboard en voz alta"
-            style={{background: '#3b82f6', color: 'white', border: 'none', padding: '12px 25px', borderRadius: '8px', fontSize: '1.1rem', cursor: 'pointer', fontWeight: 'bold'}}
-          >
-            🔊 Escuchar Dashboard en Voz Alta
-          </button>
-        </div>
-      )}
-
-      <main className="dashboard-grid" role="main">
-        <div className="card progress-card" aria-labelledby="progreso-titulo">
-          <h2 id="progreso-titulo">Progreso General (En Vivo)</h2>
-          <div className="progress-circle" aria-hidden="true">
-            <ProgressChart percentage={estudiante.progreso_general} />
-          </div>
-          <p aria-live="polite">Módulos completados: {estudiante.modulos_completados} de {estudiante.total_modulos}</p>
+      <main className="dashboard-grid">
+        <div className="card progress-card">
+          <h2>Progreso General (En Vivo)</h2>
+          <div className="progress-circle"><ProgressChart percentage={estudiante.progreso_general} /></div>
+          <p>Módulos completados: {estudiante.modulos_completados} de {estudiante.total_modulos}</p>
         </div>
 
-        <div className="card alert-card" aria-labelledby="alerta-titulo">
-          <h2 id="alerta-titulo">Alerta Proactiva - IA Predictiva</h2>
+        <div className="card alert-card">
+          <h2>Alerta Proactiva - IA Predictiva</h2>
           <p className="risk-level">Riesgo de Desvinculación: {estudiante.riesgo_desvinculacion}%</p>
-          {estudiante.riesgo_desvinculacion > 50 ? (
-            <p className="suggestion" style={{color: '#dc2626', fontWeight: 'bold'}}>⚠️ Riesgo Alto: Te sugerimos agendar una tutoría urgente.</p>
-          ) : (
-            <p className="suggestion">Sugerencia IA: Tu ritmo es constante, sigue así.</p>
-          )}
+          {estudiante.riesgo_desvinculacion > 50 ? <p className="suggestion" style={{color: '#dc2626', fontWeight: 'bold'}}>⚠️ Alto Riesgo: Tutoría sugerida.</p> : <p className="suggestion">Sugerencia IA: Tu ritmo es constante, sigue así.</p>}
         </div>
 
-        <div className="card gamification-card" aria-labelledby="logros-titulo">
-          <h2 id="logros-titulo">Logros Adaptativos 🏆</h2>
-          <ul className="badges-list" aria-label="Lista de logros obtenidos">
-            {estudiante.logros.map((logro, index) => (
-              <li key={index} className="badge">{logro}</li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="card suggestions-card" aria-labelledby="sugerencias-titulo">
-          <h2 id="sugerencias-titulo">Sugerencias Adaptadas 💡</h2>
-          <p className="perfil-text">Basado en tu estilo de aprendizaje: <strong>{estudiante.perfil_inclusivo.estilo_aprendizaje}</strong></p>
-          <ul className="suggestions-list">
-            {estudiante.sugerencias_adaptadas.map((sug, index) => (
-              <li key={index} className="suggestion-item">{sug}</li>
-            ))}
-          </ul>
+        <div className="card gamification-card" style={{gridColumn: '1 / -1', display: 'flex', gap: '20px', alignItems: 'flex-start'}}>
+          <div style={{flex: '1'}}>
+            <h2 style={{borderBottom: '2px solid #eab308', paddingBottom: '10px'}}>🎮 Centro de Gamificación</h2>
+            <div style={{display: 'flex', alignItems: 'center', gap: '20px', marginTop: '15px'}}>
+              <div style={{background: '#1f2937', padding: '15px', borderRadius: '50%', width: '80px', height: '80px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '4px solid #eab308'}}>
+                <span style={{fontSize: '0.8rem', color: '#9ca3af', textTransform: 'uppercase'}}>Nivel</span>
+                <span style={{fontSize: '2rem', fontWeight: 'bold', color: 'white', lineHeight: '1'}}>{estudiante.nivel}</span>
+              </div>
+              <div>
+                <h3 style={{margin: '0 0 5px 0', fontSize: '1.5rem', color: '#eab308'}}>{estudiante.puntos} XP</h3>
+                <p style={{margin: 0, fontSize: '0.9rem'}}>Acumulá puntos completando tareas y exámenes para subir de nivel.</p>
+              </div>
+            </div>
+          </div>
+          
+          <div style={{flex: '1', background: 'rgba(0,0,0,0.1)', padding: '15px', borderRadius: '10px'}}>
+            <h3 style={{margin: '0 0 10px 0', fontSize: '1rem'}}>🏅 Medallas (Docente)</h3>
+            <ul className="badges-list">
+              {estudiante.medallas_docente.length > 0 ? estudiante.medallas_docente.map((m, i) => <li key={i} className="badge" style={{background: '#8b5cf6'}}>{m}</li>) : <li style={{listStyle: 'none', fontSize: '0.9rem'}}>Aún no tienes medallas manuales.</li>}
+            </ul>
+            
+            <h3 style={{margin: '15px 0 10px 0', fontSize: '1rem'}}>🏆 Logros (Automáticos)</h3>
+            <ul className="badges-list">
+              {estudiante.logros_sistema.map((l, i) => <li key={i} className="badge" style={{background: '#3b82f6'}}>{l}</li>)}
+            </ul>
+          </div>
         </div>
       </main>
     </div>
