@@ -15,18 +15,17 @@ const StudentDashboard = () => {
   const role = localStorage.getItem('eduvirt_role');
 
   useEffect(() => {
-    // Redirección silenciosa e inmediata
     if (role !== 'estudiante') {
-      navigate('/');
-      return;
+      const timer = setTimeout(() => {
+        alert("⛔ Error 403 - Acceso Denegado: No tienes permisos para acceder a esta área.");
+        navigate('/');
+      }, 300); 
+      return () => clearTimeout(timer);
     }
 
     const token = localStorage.getItem('eduvirt_token');
     const email = localStorage.getItem('eduvirt_email');
-    if (!email) {
-      navigate('/');
-      return;
-    }
+    if (!email) return navigate('/');
 
     fetch(`http://localhost:8000/api/estudiantes/${email}`, { headers: { 'Authorization': `Bearer ${token}` } })
       .then(res => { if (!res.ok) throw new Error('Error API'); return res.json() })
@@ -41,8 +40,13 @@ const StudentDashboard = () => {
     return () => { if (ws.readyState === WebSocket.OPEN) ws.close(); };
   }, [navigate, role]);
 
-  // Si no es estudiante, no dibuja absolutamente nada en pantalla (evita pantallazos)
-  if (role !== 'estudiante') return null;
+  if (role !== 'estudiante') {
+    return (
+      <div style={{ height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#1f2937', color: 'white', fontFamily: 'sans-serif' }}>
+        <h2>🛡️ Bloqueando acceso no autorizado...</h2>
+      </div>
+    );
+  }
 
   const handleGuardarConfig = async (e) => {
     e.preventDefault();
@@ -94,10 +98,19 @@ const StudentDashboard = () => {
           <p>Módulos completados: {estudiante.modulos_completados} de {estudiante.total_modulos}</p>
         </div>
 
+        {/* --- TARJETA DE ALERTA ACTUALIZADA (CU02) --- */}
         <div className="card alert-card">
           <h2>Alerta Proactiva - IA Predictiva</h2>
           <p className="risk-level">Riesgo de Desvinculación: {estudiante.riesgo_desvinculacion}%</p>
-          {estudiante.riesgo_desvinculacion > 50 ? <p className="suggestion" style={{color: '#dc2626', fontWeight: 'bold'}}>⚠️ Alto Riesgo: Tutoría sugerida.</p> : <p className="suggestion">Sugerencia IA: Tu ritmo es constante, sigue así.</p>}
+          
+          <div style={{marginTop: '15px', padding: '15px', background: '#f8fafc', borderRadius: '8px', borderLeft: '4px solid #3b82f6', textAlign: 'left'}}>
+            <h3 style={{margin: '0 0 10px 0', fontSize: '1rem', color: '#1e293b'}}>🧠 Algoritmo de Estudio Sugerido:</h3>
+            {estudiante.sugerencias_adaptadas && estudiante.sugerencias_adaptadas.map((sug, idx) => (
+              <p key={idx} style={{margin: '5px 0', fontSize: '0.9rem', color: idx === 0 && estudiante.riesgo_desvinculacion > 50 ? '#dc2626' : '#334155', fontWeight: idx === 0 ? 'bold' : 'normal'}}>
+                {sug}
+              </p>
+            ))}
+          </div>
         </div>
 
         <div className="card gamification-card" style={{gridColumn: '1 / -1', display: 'flex', gap: '20px', alignItems: 'flex-start'}}>

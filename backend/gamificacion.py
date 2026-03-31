@@ -1,36 +1,48 @@
 # Archivo: backend/gamificacion.py
 
-def evaluar_logros_y_sugerencias(progreso: float, modulos_completados: int, horas: float, perfil: dict):
+def evaluar_logros_y_sugerencias(progreso, modulos, horas, perfil_inclusivo):
     logros = []
-    sugerencias = []
-    estilo = perfil.get("estilo_aprendizaje", "visual")
-
-    # --- LÓGICA DE GAMIFICACIÓN ADAPTATIVA (CU08) ---
-    if progreso >= 50:
+    
+    # --- 1. EVALUACIÓN DE LOGROS AUTOMÁTICOS ---
+    if progreso >= 50: 
         logros.append("🏆 Mitad del Camino")
-    if horas >= 2:
+    if horas >= 5: 
         logros.append("🔥 Constancia Semanal")
-    if modulos_completados >= 10:
+    if progreso >= 80: 
         logros.append("⭐ Ritmo Perfecto")
-    
-    # Gamificación inclusiva: premio por usar herramientas de accesibilidad
-    if perfil.get("requiere_alto_contraste") or perfil.get("requiere_lector_pantalla"):
-        logros.append("🛡️ Superación Inclusiva")
+    if perfil_inclusivo.get("requiere_alto_contraste") or perfil_inclusivo.get("requiere_lector_pantalla"):
+        if progreso >= 20: 
+            logros.append("🛡️ Superación Inclusiva")
 
-    if not logros:
-        logros.append("🌱 Primeros Pasos")
+    # --- 2. CU02: ALGORITMOS BÁSICOS PARA ENTENDER ---
+    estilo = perfil_inclusivo.get("estilo_aprendizaje", "visual").lower()
+    sugerencias = []
 
-    # --- LÓGICA DE SUGERENCIAS ADAPTADAS ---
-    if estilo == "visual":
-        sugerencias.append("Revisar infografías y mapas mentales del Módulo actual.")
-    elif estilo == "auditivo":
-        sugerencias.append("Escuchar los podcasts de resumen del Módulo.")
-    elif estilo == "kinestesico":
-        sugerencias.append("Realizar los ejercicios interactivos de arrastrar y soltar.")
-    
-    if progreso < 40:
-        sugerencias.append("Te recomendamos agendar una tutoría de apoyo.")
+    # Si el alumno tiene poco progreso, le pasamos el algoritmo de destrabe
+    if progreso < 50 or horas < 2:
+        sugerencias.append("⚠️ Estás en una etapa inicial o crítica. Sigue este algoritmo básico para destrabarte:")
+        
+        if estilo == "visual":
+            sugerencias.append("Paso 1: Dibuja un diagrama de flujo del tema principal.")
+            sugerencias.append("Paso 2: Resalta los conceptos clave con diferentes colores.")
+            sugerencias.append("Paso 3: Mira el video resumen del módulo antes de leer la teoría.")
+        elif estilo == "auditivo":
+            sugerencias.append("Paso 1: Lee el problema o la consigna en voz alta.")
+            sugerencias.append("Paso 2: Explícale la teoría a un compañero o grábate con el celular.")
+            sugerencias.append("Paso 3: Escucha el podcast de la unidad mientras repasas.")
+        elif estilo == "kinestesico":
+            sugerencias.append("Paso 1: Anota los conceptos en tarjetas de papel separadas.")
+            sugerencias.append("Paso 2: Ordena físicamente las tarjetas en tu escritorio.")
+            sugerencias.append("Paso 3: Aplica la teoría a un caso práctico de la vida real.")
+        else:
+            sugerencias.append("Paso 1: Divide el problema en tres partes más pequeñas.")
+            sugerencias.append("Paso 2: Resuelve la parte más fácil primero.")
+            sugerencias.append("Paso 3: Consulta el foro de dudas con la parte difícil.")
     else:
-        sugerencias.append("¡Venís excelente! Participá en el foro para sumar puntos extra.")
+        # Si va bien, le pasamos un algoritmo de mantenimiento
+        sugerencias.append("🟢 Tu ritmo es muy bueno. Algoritmo de consolidación:")
+        sugerencias.append("Paso 1: Realiza un test de autoevaluación.")
+        sugerencias.append("Paso 2: Ayuda a un compañero en el foro.")
+        sugerencias.append("Paso 3: Comienza la lectura del siguiente módulo.")
 
     return logros, sugerencias

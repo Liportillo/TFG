@@ -33,7 +33,6 @@ const AdminDashboard = () => {
     return () => { if (ws.readyState === WebSocket.OPEN) ws.close(); };
   }, [navigate, role]);
 
-  // Si no es admin, no dibuja absolutamente nada
   if (role !== 'admin') return null;
 
   const handleLogout = () => {
@@ -45,11 +44,53 @@ const AdminDashboard = () => {
     setLoading(true);
     const token = localStorage.getItem('eduvirt_token');
     try {
-      const res = await fetch('http://localhost:8000/api/reportes', { headers: { 'Authorization': `Bearer ${token}` } });
-      const data = await res.json();
+      // Flujo Principal 2: El sistema agrega métricas
+      const resStats = await fetch('http://localhost:8000/api/reportes', { headers: { 'Authorization': `Bearer ${token}` } });
+      const data = await resStats.json();
+
+      // Flujo Alternativo 1a: Si datos insuficientes, se indica incompleto
+      if (data.total_estudiantes === 0) {
+        alert("Información incompleta: No hay datos suficientes en la plataforma para generar un reporte agregado.");
+        setReporteResult(null);
+        setLoading(false);
+        return;
+      }
+
+      // Flujo Principal 3: Se produce el reporte en formato visual
       setReporteResult(data);
-    } catch (error) { console.error("Error al generar el reporte:", error); } 
-    finally { setLoading(false); }
+
+      // Flujo Alternativo 3a: Exportación falla genera retry (Reintento automático)
+      let retries = 3;
+      let success = false;
+      
+      while (retries > 0 && !success) {
+        try {
+          const resCsv = await fetch('http://localhost:8000/api/exportar/estudiantes', { headers: { 'Authorization': `Bearer ${token}` } });
+          if (!resCsv.ok) throw new Error('Fallo en la conexión del servidor');
+          
+          const blob = await resCsv.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `Reporte_Institucional_Eduvirt_${new Date().toISOString().split('T')[0]}.csv`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          success = true; // Si llega acá, funcionó y corta el bucle
+        } catch (err) {
+          retries--;
+          console.warn(`Intento de exportación fallido. Reintentando... Quedan ${retries} intentos.`);
+          if (retries === 0) {
+            alert("Error crítico: La exportación del archivo CSV ha fallado tras múltiples intentos. Revise su conexión.");
+          }
+        }
+      }
+
+    } catch (error) { 
+      console.error("Error al generar el reporte:", error); 
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   const activarCompartir = async () => {
@@ -76,7 +117,7 @@ const AdminDashboard = () => {
         <div className="nav-logo">EV</div>
         <ul className="nav-links">
           <li>Dashboard General</li>
-          <li className="active">Reportes</li>
+          <li className="active">Reportes Estadísticos</li>
           <li>Gestión de Usuarios</li>
           <li>Configuración del Sistema</li>
         </ul>
