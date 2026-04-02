@@ -12,3 +12,26 @@
 2026-03-31 19:23:51 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias inclusivas.
 2026-03-31 19:23:54 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias inclusivas.
 2026-03-31 19:24:05 - INFO - Acceso concedido: Usuario profesora@eduvirt.com (Rol: docente) ha iniciado sesión.
+2026-04-02 09:11:41 - INFO - Scheduler started
+2026-04-02 09:11:41 - INFO - Sistema IA: Modelo Predictivo cargado correctamente en memoria.
+2026-04-02 09:12:01 - INFO - Acceso concedido: Usuario ana.torres@eduvirt.com (Rol: estudiante) ha iniciado sesión.
+2026-04-02 09:31:40 - INFO - Acceso concedido: Usuario profesora@eduvirt.com (Rol: docente) ha iniciado sesión.
+2026-04-02 10:18:24 - INFO - Scheduler started
+2026-04-02 10:18:24 - INFO - Sistema IA: Modelo Predictivo cargado correctamente en memoria.
+2026-04-02 10:18:43 - INFO - Acceso concedido: Usuario profesora@eduvirt.com (Rol: docente) ha iniciado sesión.
+2026-04-02 10:27:28 - INFO - Acceso concedido: Usuario admin@eduvirt.com (Rol: admin) ha iniciado sesión.
+2026-04-02 10:28:13 - INFO - Acceso concedido: Usuario profesora@eduvirt.com (Rol: docente) ha iniciado sesión.
+2026-04-02 10:28:33 - INFO - Acceso concedido: Usuario ana.torres@eduvirt.com (Rol: estudiante) ha iniciado sesión.
+2026-04-02 10:29:40 - INFO - Acceso concedido: Usuario admin@eduvirt.com (Rol: admin) ha iniciado sesión.
+2026-04-02 10:30:06 - INFO - Acceso concedido: Usuario carlos.ruiz@eduvirt.com (Rol: estudiante) ha iniciado sesión.
+2026-04-02 10:30:29 - INFO - Acceso concedido: Usuario profesora@eduvirt.com (Rol: docente) ha iniciado sesión.
+2026-04-02 10:31:13 - INFO - Acceso concedido: Usuario admin@eduvirt.com (Rol: admin) ha iniciado sesión.
+2026-04-02 10:42:21 - INFO - Scheduler started
+2026-04-02 10:42:21 - INFO - Sistema IA: Modelo Predictivo cargado correctamente en memoria.
+2026-04-02 10:42:42 - INFO - Acceso concedido: Usuario ana.torres@eduvirt.com (Rol: estudiante) ha iniciado sesión.
+2026-04-02 10:43:05 - INFO - Acceso concedido: Usuario profesora@eduvirt.com (Rol: docente) ha iniciado sesión.
+2026-04-02 10:44:00 - INFO - Acceso concedido: Usuario admin@eduvirt.com (Rol: admin) ha iniciado sesión.
+2026-04-02 10:49:08 - INFO - Reportes: El usuario admin@eduvirt.com generó un reporte agregado visual.
+2026-04-02 10:49:08 - INFO - Reportes: El usuario admin@eduvirt.com descargó el archivo CSV de métricas.
+2026-04-02 10:49:15 - INFO - Reportes: El usuario admin@eduvirt.com generó un reporte agregado visual.
+2026-04-02 10:49:15 - INFO - Reportes: El usuario admin@eduvirt.com descargó el archivo CSV de métricas.

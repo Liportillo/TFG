@@ -12,7 +12,6 @@ const AdminDashboard = () => {
   const role = localStorage.getItem('eduvirt_role');
 
   useEffect(() => {
-    // Redirección silenciosa e inmediata
     if (role !== 'admin') {
       navigate('/');
       return;
@@ -44,11 +43,9 @@ const AdminDashboard = () => {
     setLoading(true);
     const token = localStorage.getItem('eduvirt_token');
     try {
-      // Flujo Principal 2: El sistema agrega métricas
       const resStats = await fetch('http://localhost:8000/api/reportes', { headers: { 'Authorization': `Bearer ${token}` } });
       const data = await resStats.json();
 
-      // Flujo Alternativo 1a: Si datos insuficientes, se indica incompleto
       if (data.total_estudiantes === 0) {
         alert("Información incompleta: No hay datos suficientes en la plataforma para generar un reporte agregado.");
         setReporteResult(null);
@@ -56,10 +53,8 @@ const AdminDashboard = () => {
         return;
       }
 
-      // Flujo Principal 3: Se produce el reporte en formato visual
       setReporteResult(data);
 
-      // Flujo Alternativo 3a: Exportación falla genera retry (Reintento automático)
       let retries = 3;
       let success = false;
       
@@ -76,7 +71,7 @@ const AdminDashboard = () => {
           document.body.appendChild(a);
           a.click();
           a.remove();
-          success = true; // Si llega acá, funcionó y corta el bucle
+          success = true; 
         } catch (err) {
           retries--;
           console.warn(`Intento de exportación fallido. Reintentando... Quedan ${retries} intentos.`);
@@ -135,7 +130,7 @@ const AdminDashboard = () => {
           <div className="form-row">
             <div className="input-group">
               <label>Cursos a incluir</label>
-              <select className="multi-select" size="5" defaultValue={["Introducción a Data Science"]}>
+              <select className="multi-select" size="5" multiple defaultValue={["Introducción a Data Science"]}>
                 <option value="Introducción a Data Science">Introducción a Data Science</option>
                 <option value="Python Avanzado">Python Avanzado</option>
               </select>

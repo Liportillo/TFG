@@ -1,13 +1,22 @@
 /* Archivo: frontend/src/App.css */
 
-body {
+/* RESET GLOBAL (Mata el overflow horizontal) */
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  overflow-x: hidden;
+  width: 100%;
   margin: 0;
+  padding: 0;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background-color: #f4f7f6;
   color: #333;
 }
 
 .dashboard-container {
+  width: 100%;
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
@@ -22,6 +31,19 @@ body {
   padding: 15px 30px;
   border-radius: 10px;
   margin-bottom: 30px;
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.btn-prefs {
+  padding: 8px 15px; border-radius: 5px; background: white; color: black; border: none; cursor: pointer; font-weight: bold;
+}
+.btn-logout {
+  padding: 8px 15px; border-radius: 5px; background: transparent; color: inherit; border: 1px solid currentColor; cursor: pointer; font-weight: bold;
 }
 
 .dashboard-grid {
@@ -42,99 +64,74 @@ body {
   text-align: center;
 }
 
-.card h2 {
-  color: #333;
-  margin-top: 0;
-  font-size: 1.3rem;
-}
-
+.card h2 { color: #333; margin-top: 0; font-size: 1.3rem; }
 .progress-card { border-top-color: #10b981; }
 .alert-card { border-top-color: #f59e0b; }
-.gamification-card { border-top-color: #8b5cf6; }
-.suggestions-card { border-top-color: #3b82f6; }
+.gamification-card-container { grid-column: 1 / -1; border-top-color: #8b5cf6; padding: 0;}
 
-.risk-level {
-  font-weight: bold;
-  color: #dc2626;
-  font-size: 1.2rem;
-}
-
-.badges-list, .suggestions-list {
-  list-style: none;
-  padding: 0;
+.gamification-layout {
+  display: flex;
+  flex-direction: row;
   width: 100%;
+  text-align: left;
+  align-items: stretch;
+  gap: 20px;
+  padding: 20px;
 }
+
+.gamification-left, .gamification-right { flex: 1; width: 100%; }
+.gamification-right { background: rgba(0,0,0,0.05); padding: 20px; border-radius: 10px; }
+
+.risk-level { font-weight: bold; color: #dc2626; font-size: 1.2rem; }
+.badges-list { list-style: none; padding: 0; width: 100%; }
 
 .badge {
-  background-color: #ede9fe;
-  color: #6d28d9;
-  padding: 8px 15px;
-  border-radius: 20px;
-  display: inline-block;
-  margin: 5px;
-  font-weight: bold;
+  background-color: #ede9fe; color: #6d28d9; padding: 8px 15px; border-radius: 20px;
+  display: inline-block; margin: 5px; font-weight: bold;
 }
 
-.perfil-text {
-  color: #6b7280;
-  font-size: 0.9rem;
-  margin-bottom: 15px;
+/* --- CLASES DE MODALES GLOBALES (Popups) --- */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+  background-color: rgba(0,0,0,0.6);
+  display: flex; justify-content: center; align-items: center;
+  z-index: 1000; padding: 15px;
 }
 
-.suggestion-item {
-  background-color: #eff6ff;
-  color: #1d4ed8;
-  padding: 12px;
-  border-radius: 8px;
-  margin-bottom: 10px;
-  text-align: left;
-  border-left: 4px solid #3b82f6;
+.modal-content {
+  background: #fff; padding: 30px; border-radius: 10px;
+  width: 100%; max-width: 500px; color: #333; max-height: 90vh; overflow-y: auto;
 }
 
-/* --- MODO ALTO CONTRASTE (WCAG 2.1 - Accesibilidad Inclusiva) --- */
-.alto-contraste {
-  background-color: #121212 !important;
-  color: #ffffff !important;
-  min-height: 100vh;
+.modal-content.large { max-width: 800px; }
+
+.modal-actions {
+  display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; flex-wrap: wrap;
 }
 
-.alto-contraste .card {
-  background-color: #1e1e1e !important;
-  border-color: #ffff00 !important;
-  box-shadow: 0 4px 15px rgba(255, 255, 0, 0.15);
-}
+.btn-cancel { padding: 10px 20px; border-radius: 5px; cursor: pointer; border: none; font-weight: bold; background: #e5e7eb; color: #374151; }
+.btn-save { padding: 10px 20px; border-radius: 5px; cursor: pointer; border: none; font-weight: bold; background: #3b82f6; color: white; }
 
-.alto-contraste h1, 
-.alto-contraste h2, 
-.alto-contraste p, 
-.alto-contraste strong, 
-.alto-contraste span,
-.alto-contraste .perfil-text {
-  color: #ffffff !important;
-}
+/* --- MODO ALTO CONTRASTE --- */
+.alto-contraste { background-color: #121212 !important; color: #ffffff !important; min-height: 100vh; }
+.alto-contraste .card, .alto-contraste .modal-content { background-color: #1e1e1e !important; border-color: #ffff00 !important; box-shadow: 0 4px 15px rgba(255, 255, 0, 0.15); }
+.alto-contraste h1, .alto-contraste h2, .alto-contraste p, .alto-contraste strong, .alto-contraste span, .alto-contraste h3 { color: #ffffff !important; }
+.alto-contraste .dashboard-header { background-color: #ffff00 !important; color: #000000 !important; }
+.alto-contraste .dashboard-header h1, .alto-contraste .dashboard-header p, .alto-contraste .dashboard-header strong { color: #000000 !important; }
+.alto-contraste .badge { background-color: #000000 !important; color: #ffff00 !important; border: 1px solid #ffff00; }
 
-.alto-contraste .dashboard-header {
-  background-color: #ffff00 !important;
-  color: #000000 !important;
-}
-
-.alto-contraste .dashboard-header h1, 
-.alto-contraste .dashboard-header p, 
-.alto-contraste .dashboard-header strong {
-  color: #000000 !important;
-}
-
-.alto-contraste .progress-text { color: #ffff00 !important; }
-.alto-contraste .risk-level { color: #ff5555 !important; }
-
-.alto-contraste .badge {
-  background-color: #000000 !important;
-  color: #ffff00 !important;
-  border: 1px solid #ffff00;
-}
-
-.alto-contraste .suggestion-item {
-  background-color: #000000 !important;
-  color: #ffffff !important;
-  border-left: 4px solid #ffff00 !important;
+/* =========================================
+   DISEÑO RESPONSIVO ESTUDIANTE (MÓVIL)
+   ========================================= */
+@media (max-width: 768px) {
+  .dashboard-header { flex-direction: column; text-align: center; gap: 15px; }
+  .user-profile { flex-direction: column; width: 100%; gap: 10px; }
+  .btn-prefs, .btn-logout { width: 100%; }
+  
+  .dashboard-grid { grid-template-columns: 1fr; }
+  .gamification-layout { flex-direction: column; padding: 15px; }
+  
+  .modal-content { padding: 20px; }
+  .modal-actions { justify-content: stretch; }
+  .btn-cancel, .btn-save { flex: 1; width: 100%; margin: 0; }
 }

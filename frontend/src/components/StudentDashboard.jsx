@@ -70,22 +70,32 @@ const StudentDashboard = () => {
     <div className={`dashboard-container ${estudiante.perfil_inclusivo?.requiere_alto_contraste ? 'alto-contraste' : ''}`}>
       <header className="dashboard-header">
         <h1>EduVirt</h1>
-        <div className="user-profile" style={{display: 'flex', alignItems: 'center', gap: '15px'}}>
+        <div className="user-profile">
           <p>Bienvenido/a, <strong>{estudiante.nombre}</strong></p>
-          <button onClick={() => setShowConfig(true)} style={{padding: '5px 10px', borderRadius: '5px', background: 'white', color: 'black', border: 'none'}}>⚙️ Preferencias</button>
-          <button onClick={() => {localStorage.clear(); navigate('/');}} style={{padding: '5px 10px', borderRadius: '5px', background: 'transparent', color: 'inherit', border: '1px solid currentColor'}}>Salir</button>
+          <button className="btn-prefs" onClick={() => setShowConfig(true)}>⚙️ Preferencias</button>
+          <button className="btn-logout" onClick={() => {localStorage.clear(); navigate('/');}}>Salir</button>
         </div>
       </header>
 
       {showConfig && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
-          <div style={{ background: '#fff', padding: '30px', borderRadius: '10px', width: '400px', color: '#333' }}>
-            <h2 style={{marginTop: 0}}>Configuración Inclusiva</h2>
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h2 style={{marginTop: 0, borderBottom: '2px solid #3b82f6', paddingBottom: '10px'}}>Configuración Inclusiva</h2>
             <form onSubmit={handleGuardarConfig}>
               <div style={{marginBottom: '15px'}}><label><input type="checkbox" checked={formConfig.requiere_alto_contraste} onChange={(e) => setFormConfig({...formConfig, requiere_alto_contraste: e.target.checked})} /> Alto Contraste</label></div>
-              <div style={{marginBottom: '15px'}}><label><input type="checkbox" checked={formConfig.requiere_lector_pantalla} onChange={(e) => setFormConfig({...formConfig, requiere_lector_pantalla: e.target.checked})} /> Lector Pantalla</label></div>
-              <div style={{marginBottom: '20px'}}><label>Estilo de Aprendizaje</label><select style={{width: '100%', padding: '8px'}} value={formConfig.estilo_aprendizaje} onChange={(e) => setFormConfig({...formConfig, estilo_aprendizaje: e.target.value})}><option value="visual">Visual</option><option value="auditivo">Auditivo</option><option value="kinestesico">Kinestésico</option></select></div>
-              <div style={{display: 'flex', justifyContent: 'flex-end', gap: '10px'}}><button type="button" onClick={() => setShowConfig(false)}>Cancelar</button><button type="submit" style={{background: '#3b82f6', color: 'white'}}>Guardar</button></div>
+              <div style={{marginBottom: '15px'}}><label><input type="checkbox" checked={formConfig.requiere_lector_pantalla} onChange={(e) => setFormConfig({...formConfig, requiere_lector_pantalla: e.target.checked})} /> Lector de Pantalla</label></div>
+              <div style={{marginBottom: '20px'}}>
+                <label style={{display: 'block', marginBottom: '5px', fontWeight: 'bold'}}>Estilo de Aprendizaje</label>
+                <select style={{width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ccc'}} value={formConfig.estilo_aprendizaje} onChange={(e) => setFormConfig({...formConfig, estilo_aprendizaje: e.target.value})}>
+                  <option value="visual">Visual</option>
+                  <option value="auditivo">Auditivo</option>
+                  <option value="kinestesico">Kinestésico</option>
+                </select>
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn-cancel" onClick={() => setShowConfig(false)}>Cancelar</button>
+                <button type="submit" className="btn-save">Guardar Cambios</button>
+              </div>
             </form>
           </div>
         </div>
@@ -98,12 +108,11 @@ const StudentDashboard = () => {
           <p>Módulos completados: {estudiante.modulos_completados} de {estudiante.total_modulos}</p>
         </div>
 
-        {/* --- TARJETA DE ALERTA ACTUALIZADA (CU02) --- */}
         <div className="card alert-card">
           <h2>Alerta Proactiva - IA Predictiva</h2>
           <p className="risk-level">Riesgo de Desvinculación: {estudiante.riesgo_desvinculacion}%</p>
           
-          <div style={{marginTop: '15px', padding: '15px', background: '#f8fafc', borderRadius: '8px', borderLeft: '4px solid #3b82f6', textAlign: 'left'}}>
+          <div style={{marginTop: '15px', padding: '15px', background: '#f8fafc', borderRadius: '8px', borderLeft: '4px solid #3b82f6', textAlign: 'left', width: '100%'}}>
             <h3 style={{margin: '0 0 10px 0', fontSize: '1rem', color: '#1e293b'}}>🧠 Algoritmo de Estudio Sugerido:</h3>
             {estudiante.sugerencias_adaptadas && estudiante.sugerencias_adaptadas.map((sug, idx) => (
               <p key={idx} style={{margin: '5px 0', fontSize: '0.9rem', color: idx === 0 && estudiante.riesgo_desvinculacion > 50 ? '#dc2626' : '#334155', fontWeight: idx === 0 ? 'bold' : 'normal'}}>
@@ -113,31 +122,33 @@ const StudentDashboard = () => {
           </div>
         </div>
 
-        <div className="card gamification-card" style={{gridColumn: '1 / -1', display: 'flex', gap: '20px', alignItems: 'flex-start'}}>
-          <div style={{flex: '1'}}>
-            <h2 style={{borderBottom: '2px solid #eab308', paddingBottom: '10px'}}>🎮 Centro de Gamificación</h2>
-            <div style={{display: 'flex', alignItems: 'center', gap: '20px', marginTop: '15px'}}>
-              <div style={{background: '#1f2937', padding: '15px', borderRadius: '50%', width: '80px', height: '80px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '4px solid #eab308'}}>
-                <span style={{fontSize: '0.8rem', color: '#9ca3af', textTransform: 'uppercase'}}>Nivel</span>
-                <span style={{fontSize: '2rem', fontWeight: 'bold', color: 'white', lineHeight: '1'}}>{estudiante.nivel}</span>
-              </div>
-              <div>
-                <h3 style={{margin: '0 0 5px 0', fontSize: '1.5rem', color: '#eab308'}}>{estudiante.puntos} XP</h3>
-                <p style={{margin: 0, fontSize: '0.9rem'}}>Acumulá puntos completando tareas y exámenes para subir de nivel.</p>
+        <div className="card gamification-card-container">
+          <div className="gamification-layout">
+            <div className="gamification-left">
+              <h2 style={{borderBottom: '2px solid #eab308', paddingBottom: '10px', margin: 0}}>🎮 Centro de Gamificación</h2>
+              <div style={{display: 'flex', alignItems: 'center', gap: '20px', marginTop: '20px'}}>
+                <div style={{background: '#1f2937', padding: '15px', borderRadius: '50%', width: '80px', height: '80px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '4px solid #eab308', flexShrink: 0}}>
+                  <span style={{fontSize: '0.8rem', color: '#9ca3af', textTransform: 'uppercase'}}>Nivel</span>
+                  <span style={{fontSize: '2rem', fontWeight: 'bold', color: 'white', lineHeight: '1'}}>{estudiante.nivel}</span>
+                </div>
+                <div>
+                  <h3 style={{margin: '0 0 5px 0', fontSize: '1.5rem', color: '#eab308'}}>{estudiante.puntos} XP</h3>
+                  <p style={{margin: 0, fontSize: '0.9rem'}}>Acumulá puntos completando tareas y exámenes para subir de nivel.</p>
+                </div>
               </div>
             </div>
-          </div>
-          
-          <div style={{flex: '1', background: 'rgba(0,0,0,0.1)', padding: '15px', borderRadius: '10px'}}>
-            <h3 style={{margin: '0 0 10px 0', fontSize: '1rem'}}>🏅 Medallas (Docente)</h3>
-            <ul className="badges-list">
-              {estudiante.medallas_docente.length > 0 ? estudiante.medallas_docente.map((m, i) => <li key={i} className="badge" style={{background: '#8b5cf6'}}>{m}</li>) : <li style={{listStyle: 'none', fontSize: '0.9rem'}}>Aún no tienes medallas manuales.</li>}
-            </ul>
             
-            <h3 style={{margin: '15px 0 10px 0', fontSize: '1rem'}}>🏆 Logros (Automáticos)</h3>
-            <ul className="badges-list">
-              {estudiante.logros_sistema.map((l, i) => <li key={i} className="badge" style={{background: '#3b82f6'}}>{l}</li>)}
-            </ul>
+            <div className="gamification-right">
+              <h3 style={{margin: '0 0 10px 0', fontSize: '1rem'}}>🏅 Medallas (Docente)</h3>
+              <ul className="badges-list">
+                {estudiante.medallas_docente.length > 0 ? estudiante.medallas_docente.map((m, i) => <li key={i} className="badge" style={{background: '#8b5cf6', color: 'white'}}>{m}</li>) : <li style={{listStyle: 'none', fontSize: '0.9rem'}}>Aún no tienes medallas manuales.</li>}
+              </ul>
+              
+              <h3 style={{margin: '15px 0 10px 0', fontSize: '1rem'}}>🏆 Logros (Automáticos)</h3>
+              <ul className="badges-list">
+                {estudiante.logros_sistema.map((l, i) => <li key={i} className="badge" style={{background: '#3b82f6', color: 'white'}}>{l}</li>)}
+              </ul>
+            </div>
           </div>
         </div>
       </main>

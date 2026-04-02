@@ -72,7 +72,7 @@ const DocenteDashboard = () => {
         </ul>
         <div className="nav-user">
           <span style={{color: '#10b981', fontSize: '0.8rem', fontWeight: 'bold', marginRight: '10px'}}>🟢 En vivo</span>
-          {role === 'docente' && <button style={{background: '#ef4444', color: 'white', border: 'none', padding: '8px 15px', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', marginRight: '15px'}} onClick={() => navigate('/monitoreo')}>🔴 Iniciar Sesión en Vivo</button>}
+          {role === 'docente' && <button className="btn-live" onClick={() => navigate('/monitoreo')}>🔴 Iniciar Sesión en Vivo</button>}
           
           <div className="user-avatar" style={{background: role === 'admin' ? '#f59e0b' : '#10b981'}}>{role === 'admin' ? 'AD' : 'PC'}</div>
           <span>{role === 'admin' ? 'Admin Principal' : 'Prof. Carolina'}</span>
@@ -83,16 +83,16 @@ const DocenteDashboard = () => {
 
       {/* Modal Evaluar */}
       {showEvalModal && estudianteSelect && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
-          <div style={{ background: '#fff', padding: '30px', borderRadius: '10px', width: '500px', color: '#333' }}>
+        <div className="modal-overlay">
+          <div className="modal-content">
             <h2 style={{marginTop: 0, color: '#111827', borderBottom: '2px solid #3b82f6', paddingBottom: '10px'}}>Evaluar a {estudianteSelect.nombre}</h2>
             <form onSubmit={enviarEvaluacion}>
-              <div style={{marginBottom: '15px'}}><label>Actividad</label><input type="text" value={evalData.actividad} onChange={(e) => setEvalData({...evalData, actividad: e.target.value})} style={{width: '100%', padding: '8px'}} required /></div>
-              <div style={{marginBottom: '15px'}}><label>Calificación (1 a 10)</label><input type="number" step="0.1" min="1" max="10" value={evalData.calificacion} onChange={(e) => setEvalData({...evalData, calificacion: e.target.value})} style={{width: '100%', padding: '8px'}} required /></div>
-              <div style={{marginBottom: '15px'}}><label>Feedback (Otorga 50 XP al alumno)</label><textarea rows="3" value={evalData.feedback} onChange={(e) => setEvalData({...evalData, feedback: e.target.value})} style={{width: '100%', padding: '8px'}}></textarea></div>
+              <div style={{marginBottom: '15px'}}><label style={{fontWeight: 'bold', display: 'block', marginBottom:'5px'}}>Actividad</label><input type="text" value={evalData.actividad} onChange={(e) => setEvalData({...evalData, actividad: e.target.value})} style={{width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ccc'}} required /></div>
+              <div style={{marginBottom: '15px'}}><label style={{fontWeight: 'bold', display: 'block', marginBottom:'5px'}}>Calificación (1 a 10)</label><input type="number" step="0.1" min="1" max="10" value={evalData.calificacion} onChange={(e) => setEvalData({...evalData, calificacion: e.target.value})} style={{width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ccc'}} required /></div>
+              <div style={{marginBottom: '15px'}}><label style={{fontWeight: 'bold', display: 'block', marginBottom:'5px'}}>Feedback (Otorga 50 XP al alumno)</label><textarea rows="3" value={evalData.feedback} onChange={(e) => setEvalData({...evalData, feedback: e.target.value})} style={{width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ccc'}}></textarea></div>
               <div style={{marginBottom: '20px'}}>
-                <label>Medalla de Gamificación (Opcional)</label>
-                <select value={evalData.insignia} onChange={(e) => setEvalData({...evalData, insignia: e.target.value})} style={{width: '100%', padding: '8px'}}>
+                <label style={{fontWeight: 'bold', display: 'block', marginBottom:'5px'}}>Medalla de Gamificación (Opcional)</label>
+                <select value={evalData.insignia} onChange={(e) => setEvalData({...evalData, insignia: e.target.value})} style={{width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ccc'}}>
                   <option value="">-- Ninguna --</option>
                   <option value="🌟 Trabajo Excelente">🌟 Trabajo Excelente</option>
                   <option value="🤝 Gran Colaborador">🤝 Gran Colaborador</option>
@@ -100,7 +100,10 @@ const DocenteDashboard = () => {
                   <option value="🚀 Participación Destacada">🚀 Participación Destacada</option>
                 </select>
               </div>
-              <div style={{display: 'flex', justifyContent: 'flex-end', gap: '10px'}}><button type="button" onClick={() => setShowEvalModal(false)}>Cancelar</button><button type="submit" style={{background: '#3b82f6', color: 'white'}}>Guardar Evaluación</button></div>
+              <div className="modal-actions">
+                <button type="button" className="btn-cancel" onClick={() => setShowEvalModal(false)}>Cancelar</button>
+                <button type="submit" className="btn-save">Guardar Evaluación</button>
+              </div>
             </form>
           </div>
         </div>
@@ -108,11 +111,11 @@ const DocenteDashboard = () => {
 
       {/* Modal Legajo Académico */}
       {showPerfilModal && estudianteSelect && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
-          <div style={{ background: '#fff', padding: '30px', borderRadius: '10px', width: '800px', color: '#333', maxHeight: '85vh', overflowY: 'auto' }}>
+        <div className="modal-overlay">
+          <div className="modal-content large">
             <h2 style={{marginTop: 0, color: '#111827', borderBottom: '2px solid #10b981', paddingBottom: '10px'}}>Legajo Académico: {estudianteSelect.nombre}</h2>
             
-            <div style={{marginBottom: '20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', background: '#f9fafb', padding: '15px', borderRadius: '8px', color: '#1f2937'}}>
+            <div className="ficha-grid">
               <div><strong>Email:</strong> {estudianteSelect.email}</div>
               <div><strong>Estilo de Aprendizaje:</strong> {estudianteSelect.perfil_inclusivo?.estilo_aprendizaje?.toUpperCase()}</div>
               <div><strong>Herramientas Inclusivas:</strong> {estudianteSelect.perfil_inclusivo?.requiere_alto_contraste ? '👁️ Alto Contraste ' : ''} {estudianteSelect.perfil_inclusivo?.requiere_lector_pantalla ? '🔊 Lector de Pantalla' : ''} {(!estudianteSelect.perfil_inclusivo?.requiere_alto_contraste && !estudianteSelect.perfil_inclusivo?.requiere_lector_pantalla) ? 'Ninguna' : ''}</div>
@@ -123,58 +126,63 @@ const DocenteDashboard = () => {
             </div>
 
             <h3 style={{fontSize: '1.1rem', color: '#111827'}}>Historial de Actividades</h3>
-            <table style={{width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem'}}>
-              <thead><tr style={{background: '#f3f4f6', textAlign: 'left', color: '#374151'}}><th>Actividad</th><th>Nota</th><th>Horas</th><th>Foros</th><th>¿A tiempo?</th><th>Fecha</th></tr></thead>
-              <tbody>{actividadesAlumno.map((act, idx) => (<tr key={idx} style={{color: '#4b5563'}}><td>{act.tipo_actividad}</td><td>{act.calificacion}</td><td>{act.tiempo_interaccion_horas}h</td><td>{act.participacion_foros !== undefined ? act.participacion_foros : '-'}</td><td>{act.entregado_a_tiempo === false ? '❌' : act.entregado_a_tiempo === true ? '✅' : '-'}</td><td>{new Date(act.fecha).toLocaleDateString()}</td></tr>))}</tbody>
-            </table>
-            <div style={{display: 'flex', justifyContent: 'flex-end', marginTop: '20px'}}><button onClick={() => setShowPerfilModal(false)} style={{padding: '8px 16px', background: '#6b7280', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer'}}>Cerrar Legajo</button></div>
+            <div className="table-responsive">
+              <table className="evaluations-table" style={{fontSize: '0.85rem'}}>
+                <thead><tr style={{background: '#f3f4f6', textAlign: 'left', color: '#374151'}}><th>Actividad</th><th>Nota</th><th>Horas</th><th>Foros</th><th>¿A tiempo?</th><th>Fecha</th></tr></thead>
+                <tbody>{actividadesAlumno.map((act, idx) => (<tr key={idx} style={{color: '#4b5563'}}><td>{act.tipo_actividad}</td><td>{act.calificacion}</td><td>{act.tiempo_interaccion_horas}h</td><td>{act.participacion_foros !== undefined ? act.participacion_foros : '-'}</td><td>{act.entregado_a_tiempo === false ? '❌' : act.entregado_a_tiempo === true ? '✅' : '-'}</td><td>{new Date(act.fecha).toLocaleDateString()}</td></tr>))}</tbody>
+              </table>
+            </div>
+            <div className="modal-actions">
+              <button type="button" className="btn-cancel" onClick={() => setShowPerfilModal(false)}>Cerrar Legajo</button>
+            </div>
           </div>
         </div>
       )}
 
-      <section className="table-section card" style={{marginTop: '20px'}}>
+      <section className="table-section card">
         <h2>Planilla de Seguimiento Docente</h2>
-        <table className="evaluations-table">
-          <thead>
-            <tr>
-              <th>Estudiante</th>
-              <th>Asistencia</th>
-              <th>Progreso</th>
-              <th>Riesgo IA</th>
-              <th>Perfil Inclusivo</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {estudiantes.map((est, index) => (
-              <tr key={index}>
-                <td><strong>{est.nombre}</strong><br/><small>{est.email}</small></td>
-                <td>{est.asistencia || 100}%</td>
-                <td>{est.progreso_general}%</td>
-                <td>
-                  {/* Flujo Alternativo 3a: Aviso de error en el modelo predictivo */}
-                  {est.alerta_error_ia && <div style={{color: '#d97706', fontSize: '0.75rem', marginBottom: '4px'}}>⚠️ Fallo IA. Calculado con Fallback.</div>}
-                  <span style={{backgroundColor: est.riesgo_desvinculacion >= 60 ? '#ef4444' : est.riesgo_desvinculacion >= 30 ? '#f59e0b' : '#10b981', color: 'white', padding: '5px 10px', borderRadius: '15px', fontWeight: 'bold', fontSize: '0.85rem'}}>
-                    {est.riesgo_desvinculacion}% ({est.riesgo_desvinculacion >= 60 ? 'Alto' : 'Bajo'})
-                  </span>
-                </td>
-                <td>
-                  <small style={{color: '#4b5563'}}>
-                    <strong>Estilo:</strong> {est.perfil_inclusivo?.estilo_aprendizaje}<br/>
-                    {est.perfil_inclusivo?.requiere_alto_contraste && "👁️ Alto Contraste " }
-                    {est.perfil_inclusivo?.requiere_lector_pantalla && "🔊 Lector Voz" }
-                  </small>
-                </td>
-                <td>
-                  {role === 'docente' && (
-                    <button className="action-btn edit" onClick={() => abrirModalEvaluacion(est)}>Evaluar</button> 
-                  )}
-                  <button className="action-btn view" onClick={() => verPerfilReal(est)}>Ver Legajo</button>
-                </td>
+        <div className="table-responsive">
+          <table className="evaluations-table">
+            <thead>
+              <tr>
+                <th>Estudiante</th>
+                <th>Asistencia</th>
+                <th>Progreso</th>
+                <th>Riesgo IA</th>
+                <th>Perfil Inclusivo</th>
+                <th>Acciones</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {estudiantes.map((est, index) => (
+                <tr key={index}>
+                  <td><strong>{est.nombre}</strong><br/><small style={{color: '#6b7280'}}>{est.email}</small></td>
+                  <td>{est.asistencia || 100}%</td>
+                  <td>{est.progreso_general}%</td>
+                  <td>
+                    {est.alerta_error_ia && <div style={{color: '#d97706', fontSize: '0.75rem', marginBottom: '4px'}}>⚠️ Fallo IA. Calculado con Fallback.</div>}
+                    <span style={{backgroundColor: est.riesgo_desvinculacion >= 60 ? '#ef4444' : est.riesgo_desvinculacion >= 30 ? '#f59e0b' : '#10b981', color: 'white', padding: '5px 10px', borderRadius: '15px', fontWeight: 'bold', fontSize: '0.85rem'}}>
+                      {est.riesgo_desvinculacion}% ({est.riesgo_desvinculacion >= 60 ? 'Alto' : 'Bajo'})
+                    </span>
+                  </td>
+                  <td>
+                    <small style={{color: '#4b5563'}}>
+                      <strong>Estilo:</strong> {est.perfil_inclusivo?.estilo_aprendizaje}<br/>
+                      {est.perfil_inclusivo?.requiere_alto_contraste && "👁️ Alto Contraste " }
+                      {est.perfil_inclusivo?.requiere_lector_pantalla && "🔊 Lector Voz" }
+                    </small>
+                  </td>
+                  <td>
+                    {role === 'docente' && (
+                      <button className="action-btn edit" onClick={() => abrirModalEvaluacion(est)}>Evaluar</button> 
+                    )}
+                    <button className="action-btn view" onClick={() => verPerfilReal(est)}>Ver Legajo</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
     </div>
   );
