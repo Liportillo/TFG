@@ -11,6 +11,10 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  // Estados para la nueva ventanita de "Olvidé mi contraseña"
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -44,13 +48,18 @@ const Login = () => {
     }
   };
 
-  const handleRecuperarPass = (e) => {
+  // Función para abrir la ventanita de recuperación
+  const handleAbrirRecuperar = (e) => {
     e.preventDefault();
-    if (!email) {
-      alert("Por favor, ingresa tu email arriba y luego presiona este enlace.");
-    } else {
-      alert(`Simulación: Se ha enviado un enlace de recuperación de contraseña al correo externo ${email}.`);
-    }
+    setForgotEmail(''); // Limpiamos el campo por si había algo escrito antes
+    setShowForgotModal(true);
+  };
+
+  // Función que simula el envío del correo
+  const handleEnviarRecuperacion = (e) => {
+    e.preventDefault();
+    alert("Revisa la casilla de correo y sigue las instrucciones");
+    setShowForgotModal(false); // Cierra la ventanita después de darle a aceptar
   };
 
   return (
@@ -90,8 +99,39 @@ const Login = () => {
           </button>
         </form>
         
-        <a href="#" className="forgot-pass" onClick={handleRecuperarPass}>¿Olvidaste tu contraseña?</a>
+        <a href="#" className="forgot-pass" onClick={handleAbrirRecuperar}>¿Olvidaste tu contraseña?</a>
       </div>
+
+      {/* Pantallita Modal para Recuperar Contraseña */}
+      {showForgotModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '15px', boxSizing: 'border-box' }}>
+          <div style={{ background: '#fff', padding: '30px', borderRadius: '10px', width: '100%', maxWidth: '400px', textAlign: 'left', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
+            {/* Aca le agregamos el color: '#111827' para forzar que sea oscuro */}
+            <h2 style={{marginTop: 0, color: '#111827', borderBottom: '2px solid #3b82f6', paddingBottom: '10px', fontSize: '1.3rem'}}>Recuperar Contraseña</h2>
+            <p style={{fontSize: '0.9rem', color: '#555', marginBottom: '20px'}}>
+              Ingresa tu correo electrónico y te enviaremos un enlace para restablecer el acceso a tu cuenta.
+            </p>
+            
+            <form onSubmit={handleEnviarRecuperacion}>
+              <div style={{marginBottom: '20px'}}>
+                <label style={{display: 'block', color: '#333', marginBottom: '8px', fontWeight: 'bold', fontSize: '0.9rem'}}>Correo Electrónico</label>
+                <input 
+                  type="email" 
+                  value={forgotEmail} 
+                  onChange={(e) => setForgotEmail(e.target.value)} 
+                  required 
+                  placeholder="ejemplo@correo.com"
+                  style={{width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ccc', boxSizing: 'border-box', fontSize: '0.95rem'}}
+                />
+              </div>
+              <div style={{display: 'flex', justifyContent: 'flex-end', gap: '10px'}}>
+                <button type="button" onClick={() => setShowForgotModal(false)} style={{padding: '10px 15px', borderRadius: '6px', border: 'none', background: '#e5e7eb', color: '#374151', cursor: 'pointer', fontWeight: 'bold'}}>Cancelar</button>
+                <button type="submit" style={{padding: '10px 15px', borderRadius: '6px', border: 'none', background: '#3b82f6', color: 'white', cursor: 'pointer', fontWeight: 'bold'}}>Aceptar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

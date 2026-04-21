@@ -27,15 +27,19 @@ const StudentDashboard = () => {
     const email = localStorage.getItem('eduvirt_email');
     if (!email) return navigate('/');
 
+    // Fetch inicial: Solo trae los datos al entrar a la pantalla
     fetch(`http://localhost:8000/api/estudiantes/${email}`, { headers: { 'Authorization': `Bearer ${token}` } })
       .then(res => { if (!res.ok) throw new Error('Error API'); return res.json() })
-      .then(data => { setEstudiante(data); setFormConfig(data.perfil_inclusivo); })
+      .then(data => { setEstudiante(data); })
       .catch(err => setError(err.message));
 
+    // WebSocket: Actualiza el progreso y la IA, pero YA NO toca el formulario (formConfig)
     const ws = new WebSocket('ws://localhost:8000/api/ws/monitoreo');
     ws.onmessage = (event) => {
       const miData = JSON.parse(event.data).find(e => e.email === email);
-      if (miData) { setEstudiante(miData); setFormConfig(miData.perfil_inclusivo); }
+      if (miData) { 
+        setEstudiante(miData); 
+      }
     };
     return () => { if (ws.readyState === WebSocket.OPEN) ws.close(); };
   }, [navigate, role]);
@@ -48,6 +52,16 @@ const StudentDashboard = () => {
     );
   }
 
+  // Función Snapshot: Toma los datos actuales SOLO cuando abrimos la ventana
+  const abrirPreferencias = () => {
+    setFormConfig({
+      requiere_alto_contraste: estudiante.perfil_inclusivo?.requiere_alto_contraste || false,
+      requiere_lector_pantalla: estudiante.perfil_inclusivo?.requiere_lector_pantalla || false,
+      estilo_aprendizaje: estudiante.perfil_inclusivo?.estilo_aprendizaje || 'visual'
+    });
+    setShowConfig(true);
+  };
+
   const handleGuardarConfig = async (e) => {
     e.preventDefault();
     try {
@@ -57,6 +71,7 @@ const StudentDashboard = () => {
       });
       if (res.ok) { 
         setShowConfig(false); 
+        // Refresca la vista general para aplicar el nuevo tema visual
         fetch(`http://localhost:8000/api/estudiantes/${localStorage.getItem('eduvirt_email')}`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('eduvirt_token')}` } })
           .then(r => r.json()).then(d => setEstudiante(d));
       }
@@ -66,13 +81,15 @@ const StudentDashboard = () => {
   if (error) return <div className="error">Error: {error}</div>
   if (!estudiante) return <div className="loading">Cargando dashboard...</div>
 
+  const isAltoContraste = estudiante.perfil_inclusivo?.requiere_alto_contraste;
+
   return (
-    <div className={`dashboard-container ${estudiante.perfil_inclusivo?.requiere_alto_contraste ? 'alto-contraste' : ''}`}>
+    <div className={`dashboard-container ${isAltoContraste ? 'alto-contraste' : ''}`}>
       <header className="dashboard-header">
         <h1>EduVirt</h1>
         <div className="user-profile">
           <p>Bienvenido/a, <strong>{estudiante.nombre}</strong></p>
-          <button className="btn-prefs" onClick={() => setShowConfig(true)}>⚙️ Preferencias</button>
+          <button className="btn-prefs" onClick={abrirPreferencias}>⚙️ Preferencias</button>
           <button className="btn-logout" onClick={() => {localStorage.clear(); navigate('/');}}>Salir</button>
         </div>
       </header>
@@ -80,13 +97,23 @@ const StudentDashboard = () => {
       {showConfig && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h2 style={{marginTop: 0, borderBottom: '2px solid #3b82f6', paddingBottom: '10px'}}>Configuración Inclusiva</h2>
+            <h2 style={{marginTop: 0, borderBottom: '2px solid #3b82f6', paddingBottom: '10px', color: isAltoContraste ? '#ffff00' : '#111827'}}>Configuración Inclusiva</h2>
             <form onSubmit={handleGuardarConfig}>
-              <div style={{marginBottom: '15px'}}><label><input type="checkbox" checked={formConfig.requiere_alto_contraste} onChange={(e) => setFormConfig({...formConfig, requiere_alto_contraste: e.target.checked})} /> Alto Contraste</label></div>
-              <div style={{marginBottom: '15px'}}><label><input type="checkbox" checked={formConfig.requiere_lector_pantalla} onChange={(e) => setFormConfig({...formConfig, requiere_lector_pantalla: e.target.checked})} /> Lector de Pantalla</label></div>
+              <div style={{marginBottom: '15px'}}>
+                <label style={{color: isAltoContraste ? '#ffffff' : '#111827', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer'}}>
+                  <input type="checkbox" checked={formConfig.requiere_alto_contraste} onChange={(e) => setFormConfig({...formConfig, requiere_alto_contraste: e.target.checked})} style={{width: '18px', height: '18px'}} /> 
+                  Alto Contraste
+                </label>
+              </div>
+              <div style={{marginBottom: '15px'}}>
+                <label style={{color: isAltoContraste ? '#ffffff' : '#111827', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer'}}>
+                  <input type="checkbox" checked={formConfig.requiere_lector_pantalla} onChange={(e) => setFormConfig({...formConfig, requiere_lector_pantalla: e.target.checked})} style={{width: '18px', height: '18px'}} /> 
+                  Lector de Pantalla
+                </label>
+              </div>
               <div style={{marginBottom: '20px'}}>
-                <label style={{display: 'block', marginBottom: '5px', fontWeight: 'bold'}}>Estilo de Aprendizaje</label>
-                <select style={{width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ccc'}} value={formConfig.estilo_aprendizaje} onChange={(e) => setFormConfig({...formConfig, estilo_aprendizaje: e.target.value})}>
+                <label style={{display: 'block', marginBottom: '5px', fontWeight: 'bold', color: isAltoContraste ? '#ffffff' : '#111827'}}>Estilo de Aprendizaje</label>
+                <select style={{width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ccc', backgroundColor: isAltoContraste ? '#333' : '#fff', color: isAltoContraste ? '#fff' : '#111827', fontSize: '1rem'}} value={formConfig.estilo_aprendizaje} onChange={(e) => setFormConfig({...formConfig, estilo_aprendizaje: e.target.value})}>
                   <option value="visual">Visual</option>
                   <option value="auditivo">Auditivo</option>
                   <option value="kinestesico">Kinestésico</option>
@@ -104,18 +131,20 @@ const StudentDashboard = () => {
       <main className="dashboard-grid">
         <div className="card progress-card">
           <h2>Progreso General (En Vivo)</h2>
-          <div className="progress-circle"><ProgressChart percentage={estudiante.progreso_general} /></div>
+          <div className="progress-circle">
+            <ProgressChart percentage={estudiante.progreso_general} isAltoContraste={isAltoContraste} />
+          </div>
           <p>Módulos completados: {estudiante.modulos_completados} de {estudiante.total_modulos}</p>
         </div>
 
         <div className="card alert-card">
           <h2>Alerta Proactiva - IA Predictiva</h2>
-          <p className="risk-level">Riesgo de Desvinculación: {estudiante.riesgo_desvinculacion}%</p>
+          <p className="risk-level" style={{color: isAltoContraste ? '#ff5555' : '#dc2626'}}>Riesgo de Desvinculación: {estudiante.riesgo_desvinculacion}%</p>
           
-          <div style={{marginTop: '15px', padding: '15px', background: '#f8fafc', borderRadius: '8px', borderLeft: '4px solid #3b82f6', textAlign: 'left', width: '100%'}}>
-            <h3 style={{margin: '0 0 10px 0', fontSize: '1rem', color: '#1e293b'}}>🧠 Algoritmo de Estudio Sugerido:</h3>
+          <div className="suggestion-item" style={{marginTop: '15px', width: '100%'}}>
+            <h3 style={{margin: '0 0 10px 0', fontSize: '1rem', color: isAltoContraste ? '#ffff00' : '#1e293b'}}>🧠 Algoritmo de Estudio Sugerido:</h3>
             {estudiante.sugerencias_adaptadas && estudiante.sugerencias_adaptadas.map((sug, idx) => (
-              <p key={idx} style={{margin: '5px 0', fontSize: '0.9rem', color: idx === 0 && estudiante.riesgo_desvinculacion > 50 ? '#dc2626' : '#334155', fontWeight: idx === 0 ? 'bold' : 'normal'}}>
+              <p key={idx} style={{margin: '5px 0', fontSize: '0.9rem', color: isAltoContraste ? '#ffffff' : (idx === 0 && estudiante.riesgo_desvinculacion > 50 ? '#dc2626' : '#334155'), fontWeight: idx === 0 ? 'bold' : 'normal'}}>
                 {sug}
               </p>
             ))}
@@ -125,28 +154,28 @@ const StudentDashboard = () => {
         <div className="card gamification-card-container">
           <div className="gamification-layout">
             <div className="gamification-left">
-              <h2 style={{borderBottom: '2px solid #eab308', paddingBottom: '10px', margin: 0}}>🎮 Centro de Gamificación</h2>
+              <h2 style={{borderBottom: `2px solid ${isAltoContraste ? '#ffff00' : '#eab308'}`, paddingBottom: '10px', margin: 0}}>🎮 Centro de Gamificación</h2>
               <div style={{display: 'flex', alignItems: 'center', gap: '20px', marginTop: '20px'}}>
-                <div style={{background: '#1f2937', padding: '15px', borderRadius: '50%', width: '80px', height: '80px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '4px solid #eab308', flexShrink: 0}}>
-                  <span style={{fontSize: '0.8rem', color: '#9ca3af', textTransform: 'uppercase'}}>Nivel</span>
-                  <span style={{fontSize: '2rem', fontWeight: 'bold', color: 'white', lineHeight: '1'}}>{estudiante.nivel}</span>
+                <div style={{background: isAltoContraste ? '#000' : '#1f2937', padding: '15px', borderRadius: '50%', width: '80px', height: '80px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: `4px solid ${isAltoContraste ? '#ffff00' : '#eab308'}`, flexShrink: 0}}>
+                  <span style={{fontSize: '0.8rem', color: isAltoContraste ? '#fff' : '#9ca3af', textTransform: 'uppercase'}}>Nivel</span>
+                  <span style={{fontSize: '2rem', fontWeight: 'bold', color: isAltoContraste ? '#ffff00' : 'white', lineHeight: '1'}}>{estudiante.nivel}</span>
                 </div>
                 <div>
-                  <h3 style={{margin: '0 0 5px 0', fontSize: '1.5rem', color: '#eab308'}}>{estudiante.puntos} XP</h3>
+                  <h3 style={{margin: '0 0 5px 0', fontSize: '1.5rem', color: isAltoContraste ? '#ffff00' : '#eab308'}}>{estudiante.puntos} XP</h3>
                   <p style={{margin: 0, fontSize: '0.9rem'}}>Acumulá puntos completando tareas y exámenes para subir de nivel.</p>
                 </div>
               </div>
             </div>
             
-            <div className="gamification-right">
+            <div className="gamification-right" style={{background: isAltoContraste ? '#111' : 'rgba(0,0,0,0.05)'}}>
               <h3 style={{margin: '0 0 10px 0', fontSize: '1rem'}}>🏅 Medallas (Docente)</h3>
               <ul className="badges-list">
-                {estudiante.medallas_docente.length > 0 ? estudiante.medallas_docente.map((m, i) => <li key={i} className="badge" style={{background: '#8b5cf6', color: 'white'}}>{m}</li>) : <li style={{listStyle: 'none', fontSize: '0.9rem'}}>Aún no tienes medallas manuales.</li>}
+                {estudiante.medallas_docente.length > 0 ? estudiante.medallas_docente.map((m, i) => <li key={i} className="badge" style={{background: isAltoContraste ? '#000' : '#8b5cf6', color: isAltoContraste ? '#ffff00' : 'white', border: isAltoContraste ? '1px solid #ffff00' : 'none'}}>{m}</li>) : <li style={{listStyle: 'none', fontSize: '0.9rem'}}>Aún no tienes medallas manuales.</li>}
               </ul>
               
               <h3 style={{margin: '15px 0 10px 0', fontSize: '1rem'}}>🏆 Logros (Automáticos)</h3>
               <ul className="badges-list">
-                {estudiante.logros_sistema.map((l, i) => <li key={i} className="badge" style={{background: '#3b82f6', color: 'white'}}>{l}</li>)}
+                {estudiante.logros_sistema.map((l, i) => <li key={i} className="badge" style={{background: isAltoContraste ? '#000' : '#3b82f6', color: isAltoContraste ? '#ffff00' : 'white', border: isAltoContraste ? '1px solid #ffff00' : 'none'}}>{l}</li>)}
               </ul>
             </div>
           </div>

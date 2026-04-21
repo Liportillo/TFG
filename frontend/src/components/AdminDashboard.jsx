@@ -111,10 +111,7 @@ const AdminDashboard = () => {
       <nav className="admin-nav">
         <div className="nav-logo">EV</div>
         <ul className="nav-links">
-          <li>Dashboard General</li>
           <li className="active">Reportes Estadísticos</li>
-          <li>Gestión de Usuarios</li>
-          <li>Configuración del Sistema</li>
         </ul>
         <div className="nav-user">
           <span style={{color: '#10b981', fontSize: '0.8rem', fontWeight: 'bold', marginRight: '10px'}}>🟢 Conectado</span>
@@ -130,15 +127,19 @@ const AdminDashboard = () => {
           <div className="form-row">
             <div className="input-group">
               <label>Cursos a incluir</label>
-              <select className="multi-select" size="5" multiple defaultValue={["Introducción a Data Science"]}>
-                <option value="Introducción a Data Science">Introducción a Data Science</option>
-                <option value="Python Avanzado">Python Avanzado</option>
+              <select className="multi-select" size="5" multiple defaultValue={["Matemática"]}>
+                <option value="Matemática">Matemática</option>
+                <option value="Programación">Programación</option>
+                <option value="Estadística">Estadística</option>
               </select>
             </div>
             <div className="input-group">
               <label>Periodo</label>
-              <select defaultValue="Último trimestre">
-                <option value="Último trimestre">Último trimestre</option>
+              <select defaultValue="Primer trimestre">
+                <option value="Primer trimestre">Primer trimestre</option>
+                <option value="Segundo trimestre">Segundo trimestre</option>
+                <option value="Tercer trimestre">Tercer trimestre</option>
+                <option value="Cuarto trimestre">Cuarto trimestre</option>
               </select>
             </div>
           </div>

@@ -35,3 +35,53 @@
 2026-04-02 10:49:08 - INFO - Reportes: El usuario admin@eduvirt.com descargó el archivo CSV de métricas.
 2026-04-02 10:49:15 - INFO - Reportes: El usuario admin@eduvirt.com generó un reporte agregado visual.
 2026-04-02 10:49:15 - INFO - Reportes: El usuario admin@eduvirt.com descargó el archivo CSV de métricas.
+2026-04-21 16:35:34 - INFO - Scheduler started
+2026-04-21 16:35:34 - INFO - Sistema IA: Modelo Predictivo cargado correctamente en memoria.
+2026-04-21 16:48:57 - INFO - Acceso concedido: Usuario admin@eduvirt.com (Rol: admin) ha iniciado sesión.
+2026-04-21 16:56:49 - INFO - Reportes: El usuario admin@eduvirt.com generó un reporte agregado visual.
+2026-04-21 16:56:49 - INFO - Reportes: El usuario admin@eduvirt.com descargó el archivo CSV de métricas.
+2026-04-21 17:00:06 - INFO - Reportes: El usuario admin@eduvirt.com generó un reporte agregado visual.
+2026-04-21 17:00:06 - INFO - Reportes: El usuario admin@eduvirt.com descargó el archivo CSV de métricas.
+2026-04-21 17:03:28 - INFO - Scheduler started
+2026-04-21 17:03:28 - INFO - Sistema IA: Modelo Predictivo cargado correctamente en memoria.
+2026-04-21 17:03:58 - INFO - Acceso concedido: Usuario admin@eduvirt.com (Rol: admin) ha iniciado sesión.
+2026-04-21 17:04:04 - INFO - Reportes: El usuario admin@eduvirt.com generó un reporte agregado visual.
+2026-04-21 17:04:04 - INFO - Reportes: El usuario admin@eduvirt.com descargó el archivo CSV de métricas.
+2026-04-21 17:04:30 - INFO - Acceso concedido: Usuario ana.torres@eduvirt.com (Rol: estudiante) ha iniciado sesión.
+2026-04-21 17:07:16 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias inclusivas.
+2026-04-21 17:07:25 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias inclusivas.
+2026-04-21 17:07:29 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias inclusivas.
+2026-04-21 17:07:36 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias inclusivas.
+2026-04-21 17:07:40 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias inclusivas.
+2026-04-21 17:08:04 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias inclusivas.
+2026-04-21 17:08:08 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias inclusivas.
+2026-04-21 17:08:13 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias inclusivas.
+2026-04-21 17:13:33 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias inclusivas.
+2026-04-21 17:13:41 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias inclusivas.
+2026-04-21 17:13:48 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias inclusivas.
+2026-04-21 17:14:01 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias inclusivas.
+2026-04-21 17:14:04 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias inclusivas.
+2026-04-21 17:14:09 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias inclusivas.
+2026-04-21 17:14:14 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias inclusivas.
+2026-04-21 17:14:16 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias inclusivas.
+2026-04-21 17:14:19 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias inclusivas.
+2026-04-21 17:14:24 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias inclusivas.
+2026-04-21 17:14:32 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias inclusivas.
+2026-04-21 17:15:48 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias inclusivas.
+2026-04-21 17:15:50 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias inclusivas.
+2026-04-21 17:15:53 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias inclusivas.
+2026-04-21 17:15:57 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias inclusivas.
+2026-04-21 17:16:00 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias inclusivas.
+2026-04-21 17:16:02 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias inclusivas.
+2026-04-21 17:16:06 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias inclusivas.
+2026-04-21 17:16:16 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias inclusivas.
+2026-04-21 17:16:22 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias inclusivas.
+2026-04-21 17:21:58 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias inclusivas.
+2026-04-21 17:22:06 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias inclusivas.
+2026-04-21 17:22:12 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias inclusivas.
+2026-04-21 17:22:18 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias inclusivas.
+2026-04-21 17:22:27 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias inclusivas.
+2026-04-21 17:22:33 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias inclusivas.
+2026-04-21 17:22:43 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias inclusivas.
+2026-04-21 17:22:51 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias inclusivas.
+2026-04-21 17:23:50 - INFO - Acceso concedido: Usuario profesora@eduvirt.com (Rol: docente) ha iniciado sesión.

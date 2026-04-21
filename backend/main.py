@@ -106,7 +106,8 @@ def tarea_reporte_automatico():
     if estudiantes:
         df = pd.DataFrame([{"Nombre": e.get("nombre", ""), "Progreso (%)": e.get("progreso_general", 0), "Riesgo (%)": e.get("riesgo_desvinculacion", 0)} for e in estudiantes])
         if not os.path.exists("reportes_automaticos"): os.makedirs("reportes_automaticos")
-        df.to_csv(f"reportes_automaticos/reporte_cron_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv", index=False)
+        # SOLUCIÓN EXCEL: sep=';' y encoding='utf-8-sig'
+        df.to_csv(f"reportes_automaticos/reporte_cron_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv", index=False, sep=';', encoding='utf-8-sig')
 
 def verificar_token(token: str = Depends(oauth2_scheme)):
     try: return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -237,7 +238,9 @@ def generar_reporte_agregado(usuario: dict = Depends(verificar_token)):
 @app.get("/api/exportar/estudiantes")
 def exportar_estudiantes(usuario: dict = Depends(verificar_token)):
     datos = [{"Nombre": e.get("nombre", ""), "Progreso": e.get("progreso_general", 0), "Puntos": e.get("puntos", 0)} for e in _get_estudiantes_procesados()]
-    stream = io.StringIO(); pd.DataFrame(datos).to_csv(stream, index=False)
+    stream = io.StringIO()
+    # SOLUCIÓN EXCEL: sep=';' y encoding='utf-8-sig'
+    pd.DataFrame(datos).to_csv(stream, index=False, sep=';', encoding='utf-8-sig')
     logging.info(f"Reportes: El usuario {usuario['sub']} descargó el archivo CSV de métricas.")
     return StreamingResponse(iter([stream.getvalue()]), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=reporte.csv"})
 
