@@ -65,14 +65,19 @@ const DocenteDashboard = () => {
       <nav className="docente-nav">
         <div className="nav-logo">EV</div>
         <ul className="nav-links">
-          <li>Estudiantes</li>
-          <li>Actividades</li>
           <li className="active">Planilla de Seguimiento</li>
           {role === 'admin' && <li onClick={() => navigate('/admin')} style={{color: '#8b5cf6', cursor: 'pointer', fontWeight: 'bold'}}>⬅ Volver a Reportes</li>}
         </ul>
         <div className="nav-user">
-          <span style={{color: '#10b981', fontSize: '0.8rem', fontWeight: 'bold', marginRight: '10px'}}>🟢 En vivo</span>
-          {role === 'docente' && <button className="btn-live" onClick={() => navigate('/monitoreo')}>🔴 Iniciar Sesión en Vivo</button>}
+          <span style={{color: '#10b981', fontSize: '0.8rem', fontWeight: 'bold', marginRight: '10px'}}>🟢 Sistema Conectado</span>
+          {role === 'docente' && (
+            <button 
+              style={{background: '#3b82f6', color: 'white', border: 'none', padding: '8px 15px', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', marginRight: '15px'}} 
+              onClick={() => navigate('/monitoreo')}
+            >
+              📡 Abrir Radar de Alertas IA
+            </button>
+          )}
           
           <div className="user-avatar" style={{background: role === 'admin' ? '#f59e0b' : '#10b981'}}>{role === 'admin' ? 'AD' : 'PC'}</div>
           <span>{role === 'admin' ? 'Admin Principal' : 'Prof. Carolina'}</span>
@@ -162,7 +167,7 @@ const DocenteDashboard = () => {
                   <td>
                     {est.alerta_error_ia && <div style={{color: '#d97706', fontSize: '0.75rem', marginBottom: '4px'}}>⚠️ Fallo IA. Calculado con Fallback.</div>}
                     <span style={{backgroundColor: est.riesgo_desvinculacion >= 60 ? '#ef4444' : est.riesgo_desvinculacion >= 30 ? '#f59e0b' : '#10b981', color: 'white', padding: '5px 10px', borderRadius: '15px', fontWeight: 'bold', fontSize: '0.85rem'}}>
-                      {est.riesgo_desvinculacion}% ({est.riesgo_desvinculacion >= 60 ? 'Alto' : 'Bajo'})
+                      {est.riesgo_desvinculacion}%
                     </span>
                   </td>
                   <td>
