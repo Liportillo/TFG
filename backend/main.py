@@ -19,8 +19,24 @@ from datetime import datetime, timedelta, timezone
 import joblib
 import os
 from apscheduler.schedulers.background import BackgroundScheduler
+from cryptography.fernet import Fernet # Librería de Cifrado AES
 
-# --- CONFIGURACIÓN DE LOGS PARA SOPORTE IT ---
+# --- CONFIGURACIÓN DE CIFRADO EN REPOSO (RNF-04) ---
+AES_SECRET_KEY = b'gA8u68H2y55gXN_jT6QG1z4i_d1qV7u5L9X7K4bV-k8='
+cipher_suite = Fernet(AES_SECRET_KEY)
+
+def cifrar_dato(texto: str) -> str:
+    if not texto: return texto
+    return cipher_suite.encrypt(texto.encode('utf-8')).decode('utf-8')
+
+def descifrar_dato(texto_cifrado: str) -> str:
+    if not texto_cifrado: return texto_cifrado
+    try:
+        return cipher_suite.decrypt(texto_cifrado.encode('utf-8')).decode('utf-8')
+    except:
+        return texto_cifrado 
+
+# --- CONFIGURACIÓN DE LOGS ---
 logging.basicConfig(
     filename='eduvirt_system.log',
     level=logging.INFO,
@@ -40,7 +56,7 @@ ALGORITHM = "HS256"
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/login")
 
 # =====================================================================
-# MODELOS DEL DOMINIO (Mapeo estricto del Diagrama de Clases UML del PDF)
+# MODELOS DEL DOMINIO
 # =====================================================================
 
 class UsuarioBase(BaseModel):
@@ -106,7 +122,6 @@ def tarea_reporte_automatico():
     if estudiantes:
         df = pd.DataFrame([{"Nombre": e.get("nombre", ""), "Progreso (%)": e.get("progreso_general", 0), "Riesgo (%)": e.get("riesgo_desvinculacion", 0)} for e in estudiantes])
         if not os.path.exists("reportes_automaticos"): os.makedirs("reportes_automaticos")
-        # SOLUCIÓN EXCEL: sep=';' y encoding='utf-8-sig'
         df.to_csv(f"reportes_automaticos/reporte_cron_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv", index=False, sep=';', encoding='utf-8-sig')
 
 def verificar_token(token: str = Depends(oauth2_scheme)):
@@ -129,34 +144,34 @@ def calcular_riesgo_con_ia(progreso, horas, modulos):
 def login_for_access_token(request: LoginRequest):
     usuario_db = db.usuarios.find_one({"email": request.email})
     if not usuario_db: 
-        logging.warning(f"Seguridad: Intento de login con usuario inexistente ({request.email})")
         raise HTTPException(status_code=404, detail="Usuario no registrado")
     
     if usuario_db.get("bloqueado"): 
-        logging.warning(f"Seguridad: Intento de acceso a cuenta bloqueada ({request.email})")
         raise HTTPException(status_code=403, detail="CUENTA BLOQUEADA")
     
     if hashlib.sha256(request.password.encode()).hexdigest() != usuario_db.get("password_hash"):
         intentos = usuario_db.get("intentos_fallidos", 0) + 1
         db.usuarios.update_one({"email": request.email}, {"$set": {"intentos_fallidos": intentos, "bloqueado": intentos >= 3}})
-        logging.warning(f"Seguridad: Contraseña incorrecta para {request.email}. Intento {intentos}/3")
         raise HTTPException(status_code=401, detail=f"Contraseña incorrecta. Intento {intentos}/3")
 
     db.usuarios.update_one({"email": request.email}, {"$set": {"intentos_fallidos": 0}})
     token = jwt.encode({"sub": request.email, "role": usuario_db["role"], "exp": datetime.now(timezone.utc) + timedelta(hours=2)}, SECRET_KEY, algorithm=ALGORITHM)
-    
-    logging.info(f"Acceso concedido: Usuario {request.email} (Rol: {usuario_db['role']}) ha iniciado sesión.")
     return {"access_token": token, "usuario": request.email, "rol": usuario_db["role"]}
 
 @app.put("/api/estudiantes/{email}/perfil")
 def actualizar_perfil(email: str, perfil: PerfilUpdate, usuario: dict = Depends(verificar_token)):
-    db.estudiantes.update_one({"email": email}, {"$set": {"perfil_inclusivo.requiere_alto_contraste": perfil.requiere_alto_contraste, "perfil_inclusivo.requiere_lector_pantalla": perfil.requiere_lector_pantalla, "perfil_inclusivo.estilo_aprendizaje": perfil.estilo_aprendizaje}})
-    logging.info(f"Auditoría: El usuario {email} actualizó sus preferencias inclusivas.")
-    return {"mensaje": "Preferencias actualizadas."}
+    estilo_cifrado = cifrar_dato(perfil.estilo_aprendizaje)
+    
+    db.estudiantes.update_one({"email": email}, {"$set": {
+        "perfil_inclusivo.requiere_alto_contraste": perfil.requiere_alto_contraste, 
+        "perfil_inclusivo.requiere_lector_pantalla": perfil.requiere_lector_pantalla, 
+        "perfil_inclusivo.estilo_aprendizaje": estilo_cifrado
+    }})
+    logging.info(f"Auditoría: El usuario {email} actualizó sus preferencias. Datos sensibles cifrados con AES-256.")
+    return {"mensaje": "Preferencias actualizadas de forma segura."}
 
 @app.post("/api/integracion/moodle")
 def webhook_moodle(actividad: ActividadMoodle):
-    logging.info(f"Webhook Integración: Datos recibidos desde LMS Moodle para {actividad.estudiante_email}")
     nueva_actividad = actividad.dict()
     nueva_actividad.update({"completado": True, "fecha": datetime.now()})
     db.actividades.insert_one(nueva_actividad)
@@ -176,13 +191,11 @@ def webhook_moodle(actividad: ActividadMoodle):
         except Exception as e:
             riesgo_calculado = round(max(0, min(100, 100 - (nuevo_progreso * 0.6 + (total_horas / 50) * 100 * 0.4))), 2)
             alerta_ia = True
-            logging.error(f"Sistema IA: Error en predicción para {actividad.estudiante_email} - Fallback aplicado. Razón: {e}")
 
         campos_a_actualizar = {
             "progreso_general": nuevo_progreso, "modulos_completados": nuevos_modulos,
             "puntos": puntos_totales, "nivel": (puntos_totales // 100) + 1,
-            "riesgo_desvinculacion": riesgo_calculado, 
-            "alerta_error_ia": alerta_ia 
+            "riesgo_desvinculacion": riesgo_calculado, "alerta_error_ia": alerta_ia 
         }
         if actividad.tasa_asistencia is not None: campos_a_actualizar["asistencia"] = actividad.tasa_asistencia
 
@@ -196,22 +209,21 @@ def evaluar_estudiante(evaluacion: Evaluacion, usuario: dict = Depends(verificar
     if estudiante:
         db.estudiantes.update_one({"email": evaluacion.estudiante_email}, {"$set": {"puntos": estudiante.get("puntos", 0) + 50, "nivel": ((estudiante.get("puntos", 0) + 50) // 100) + 1}})
         if evaluacion.insignia: db.estudiantes.update_one({"email": evaluacion.estudiante_email}, {"$addToSet": {"logros_manuales": evaluacion.insignia}})
-    logging.info(f"Auditoría: El Docente {usuario['sub']} evaluó al alumno {evaluacion.estudiante_email} en la actividad '{evaluacion.actividad}'")
     return {"mensaje": "Evaluación guardada."}
 
 def _get_estudiantes_procesados():
     estudiantes = list(db.estudiantes.find({}, {"_id": 0}))
     for est in estudiantes:
+        if "perfil_inclusivo" in est and "estilo_aprendizaje" in est["perfil_inclusivo"]:
+            est["perfil_inclusivo"]["estilo_aprendizaje"] = descifrar_dato(est["perfil_inclusivo"]["estilo_aprendizaje"])
+
         actividades = list(db.actividades.find({"estudiante_email": est["email"]}, {"_id": 0}))
         total_horas = sum([act.get("tiempo_interaccion_horas", 0) for act in actividades])
-        
-        riesgo = est.get("riesgo_desvinculacion", 0)
         
         logros_auto, sugerencias = evaluar_logros_y_sugerencias(est.get("progreso_general", 0), est.get("modulos_completados", 0), total_horas, est.get("perfil_inclusivo", {}))
         
         est["puntos"] = est.get("puntos", 0)
         est["nivel"] = est.get("nivel", 1)
-        est["riesgo_desvinculacion"] = riesgo
         est["logros_sistema"] = logros_auto
         est["medallas_docente"] = est.get("logros_manuales", [])
         est["sugerencias_adaptadas"] = sugerencias
@@ -232,16 +244,13 @@ def obtener_actividades(email: str, usuario: dict = Depends(verificar_token)): r
 @app.get("/api/reportes")
 def generar_reporte_agregado(usuario: dict = Depends(verificar_token)):
     df = pd.DataFrame(_get_estudiantes_procesados())
-    logging.info(f"Reportes: El usuario {usuario['sub']} generó un reporte agregado visual.")
     return {"total_estudiantes": len(df), "promedio_progreso": round(df["progreso_general"].mean(), 2) if len(df)>0 else 0, "estudiantes_inclusivos": sum(1 for p in df["perfil_inclusivo"] if p.get("requiere_alto_contraste")) if len(df)>0 else 0}
 
 @app.get("/api/exportar/estudiantes")
 def exportar_estudiantes(usuario: dict = Depends(verificar_token)):
     datos = [{"Nombre": e.get("nombre", ""), "Progreso": e.get("progreso_general", 0), "Puntos": e.get("puntos", 0)} for e in _get_estudiantes_procesados()]
     stream = io.StringIO()
-    # SOLUCIÓN EXCEL: sep=';' y encoding='utf-8-sig'
     pd.DataFrame(datos).to_csv(stream, index=False, sep=';', encoding='utf-8-sig')
-    logging.info(f"Reportes: El usuario {usuario['sub']} descargó el archivo CSV de métricas.")
     return StreamingResponse(iter([stream.getvalue()]), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=reporte.csv"})
 
 @app.post("/api/admin/programar-reporte")

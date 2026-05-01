@@ -27,13 +27,11 @@ const StudentDashboard = () => {
     const email = localStorage.getItem('eduvirt_email');
     if (!email) return navigate('/');
 
-    // Fetch inicial: Solo trae los datos al entrar a la pantalla
     fetch(`http://localhost:8000/api/estudiantes/${email}`, { headers: { 'Authorization': `Bearer ${token}` } })
       .then(res => { if (!res.ok) throw new Error('Error API'); return res.json() })
       .then(data => { setEstudiante(data); })
       .catch(err => setError(err.message));
 
-    // WebSocket: Actualiza el progreso y la IA, pero YA NO toca el formulario (formConfig)
     const ws = new WebSocket('ws://localhost:8000/api/ws/monitoreo');
     ws.onmessage = (event) => {
       const miData = JSON.parse(event.data).find(e => e.email === email);
@@ -41,7 +39,7 @@ const StudentDashboard = () => {
         setEstudiante(miData); 
       }
     };
-    return () => { if (ws.readyState === WebSocket.OPEN) ws.close(); };
+    return () => { if (ws.readyState === WebSocket.OPEN) ws.close(); window.speechSynthesis.cancel(); };
   }, [navigate, role]);
 
   if (role !== 'estudiante') {
@@ -52,7 +50,6 @@ const StudentDashboard = () => {
     );
   }
 
-  // Función Snapshot: Toma los datos actuales SOLO cuando abrimos la ventana
   const abrirPreferencias = () => {
     setFormConfig({
       requiere_alto_contraste: estudiante.perfil_inclusivo?.requiere_alto_contraste || false,
@@ -71,11 +68,30 @@ const StudentDashboard = () => {
       });
       if (res.ok) { 
         setShowConfig(false); 
-        // Refresca la vista general para aplicar el nuevo tema visual
         fetch(`http://localhost:8000/api/estudiantes/${localStorage.getItem('eduvirt_email')}`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('eduvirt_token')}` } })
           .then(r => r.json()).then(d => setEstudiante(d));
       }
     } catch (err) { console.error(err); }
+  };
+
+  const leerPantalla = () => {
+    if (!estudiante) return;
+    window.speechSynthesis.cancel(); 
+    
+    const texto = `
+      EduVirt, Panel de control estudiantil. 
+      Bienvenido, ${estudiante.nombre}. 
+      Tu progreso general es del ${estudiante.progreso_general} por ciento, con ${estudiante.modulos_completados} de ${estudiante.total_modulos} módulos completados.
+      Alerta Proactiva de Inteligencia Artificial: Tu riesgo de desvinculación es del ${estudiante.riesgo_desvinculacion} por ciento.
+      Algoritmo de Estudio Sugerido: ${estudiante.sugerencias_adaptadas ? estudiante.sugerencias_adaptadas.join('. ') : 'Sin sugerencias'}.
+      Centro de Gamificación: Eres nivel ${estudiante.nivel} con ${estudiante.puntos} puntos de experiencia.
+      Cuentas con ${estudiante.medallas_docente.length} medallas del docente y ${estudiante.logros_sistema.length} logros automáticos.
+    `;
+
+    const locucion = new SpeechSynthesisUtterance(texto);
+    locucion.lang = 'es-ES';
+    locucion.rate = 0.95;
+    window.speechSynthesis.speak(locucion);
   };
 
   if (error) return <div className="error">Error: {error}</div>
@@ -89,8 +105,19 @@ const StudentDashboard = () => {
         <h1>EduVirt</h1>
         <div className="user-profile">
           <p>Bienvenido/a, <strong>{estudiante.nombre}</strong></p>
+          
+          {/* Botón dinámico de Lector de Pantalla */}
+          {estudiante.perfil_inclusivo?.requiere_lector_pantalla && (
+            <button 
+              onClick={leerPantalla} 
+              style={{ background: '#8b5cf6', color: 'white', border: 'none', padding: '8px 12px', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', marginRight: '10px' }}
+            >
+              🔊 Leer Pantalla
+            </button>
+          )}
+
           <button className="btn-prefs" onClick={abrirPreferencias}>⚙️ Preferencias</button>
-          <button className="btn-logout" onClick={() => {localStorage.clear(); navigate('/');}}>Salir</button>
+          <button className="btn-logout" onClick={() => { window.speechSynthesis.cancel(); localStorage.clear(); navigate('/');}}>Salir</button>
         </div>
       </header>
 
@@ -108,11 +135,11 @@ const StudentDashboard = () => {
               <div style={{marginBottom: '15px'}}>
                 <label style={{color: isAltoContraste ? '#ffffff' : '#111827', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer'}}>
                   <input type="checkbox" checked={formConfig.requiere_lector_pantalla} onChange={(e) => setFormConfig({...formConfig, requiere_lector_pantalla: e.target.checked})} style={{width: '18px', height: '18px'}} /> 
-                  Lector de Pantalla
+                  Habilitar Botón Lector de Pantalla
                 </label>
               </div>
               <div style={{marginBottom: '20px'}}>
-                <label style={{display: 'block', marginBottom: '5px', fontWeight: 'bold', color: isAltoContraste ? '#ffffff' : '#111827'}}>Estilo de Aprendizaje</label>
+                <label style={{display: 'block', marginBottom: '5px', fontWeight: 'bold', color: isAltoContraste ? '#ffffff' : '#111827'}}>Estilo de Aprendizaje (Cifrado en DB)</label>
                 <select style={{width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ccc', backgroundColor: isAltoContraste ? '#333' : '#fff', color: isAltoContraste ? '#fff' : '#111827', fontSize: '1rem'}} value={formConfig.estilo_aprendizaje} onChange={(e) => setFormConfig({...formConfig, estilo_aprendizaje: e.target.value})}>
                   <option value="visual">Visual</option>
                   <option value="auditivo">Auditivo</option>
