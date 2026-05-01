@@ -127,3 +127,7 @@
 2026-04-24 20:17:23 - INFO - Scheduler started
 2026-04-24 20:17:23 - INFO - Sistema IA: Modelo Predictivo cargado correctamente en memoria.
 2026-04-24 20:17:39 - INFO - Acceso concedido: Usuario ana.torres@eduvirt.com (Rol: estudiante) ha iniciado sesión.
+2026-05-01 17:42:23 - INFO - Scheduler started
+2026-05-01 17:42:23 - INFO - Sistema IA: Modelo Predictivo cargado correctamente en memoria.
+2026-05-01 17:57:11 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias. Datos sensibles cifrados con AES-256.
+2026-05-01 17:57:28 - INFO - Auditoría: El usuario ana.torres@eduvirt.com actualizó sus preferencias. Datos sensibles cifrados con AES-256.
